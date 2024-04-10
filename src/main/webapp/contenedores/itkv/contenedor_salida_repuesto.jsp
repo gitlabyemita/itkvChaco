@@ -108,8 +108,8 @@
         <% }%>
     </select> 
     
-    
-    
+    <strong><a>Horómetro</a></strong>
+    <input type='number'  id='horometro' class='form-control'>    
   
 
     

@@ -1046,6 +1046,8 @@ function registrar_transferencias_itkv() {
 
         var id_ubicacion = $("#ubicacion").find(':selected').attr('value');
         var desc_ubicacion = $("#ubicacion").find(':selected').attr('desc');
+        
+        var horometro = $("#horometro").val();
 
         Swal.fire({
             title: 'CONFIRMACION',
@@ -1073,6 +1075,7 @@ function registrar_transferencias_itkv() {
                         desc_actividad: desc_actividad,
                         id_ubicacion: id_ubicacion,
                         desc_ubicacion: desc_ubicacion,
+                        horometro:horometro,
                         jsonObj: json_string
 
 
