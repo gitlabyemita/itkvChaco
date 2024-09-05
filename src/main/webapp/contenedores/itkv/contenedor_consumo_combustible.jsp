@@ -82,7 +82,7 @@
 
     <strong ><a>Responsable</a></strong>
 
-    <select class="form-control selectpicker"data-live-search="true"  required id="retirado_por_select" onchange="insert_valor_responsable_combo_itkv()">
+    <select class="form-control selectpicker" data-live-search="true"  required id="retirado_por_select" onchange="insert_valor_responsable_combo_itkv()">
         <option value="">Seleccione</option>    
         <%  while (rsResponsable.next()) {%>
         <option><%=rsResponsable.getString("U_retiradopor")%></option>    

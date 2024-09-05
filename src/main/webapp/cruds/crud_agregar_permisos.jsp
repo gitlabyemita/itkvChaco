@@ -4,74 +4,77 @@
     Author     : csanchez
 --%>
 
-<%@page import="clases.controles"%>
-<%@page contentType="application/json; charset=utf-8"%>
-<%@page import="org.json.JSONObject"%>
-<%@page import="java.sql.ResultSet"%>
-<%@page import="java.sql.CallableStatement"%>
-<%@page import="java.sql.Statement"%>
-<%@page import ="java.sql.Connection"%>
-<%@page import ="java.sql.SQLException"%>
-<%@page import ="java.sql.DriverManager"%>
-<%@page import="java.sql.Statement"%>
-<%@page import="java.sql.PreparedStatement"%>
- 
+<%@page import="org.json.JSONArray"%>
+<%@page import="java.util.Arrays"%>
+<%@page import="com.microsoft.sqlserver.jdbc.SQLServerDataTable"%>
+<%@page import="com.fasterxml.jackson.databind.ObjectMapper"%>
+<%@page import="principal.permisos"%>
+<%@page contentType="application/json; charset=utf-8"%>  
+<%@include file="../cruds/conexion.jsp" %>
 <%@include  file="../chequearsesion.jsp" %>
-<jsp:useBean id="fuente" class="clases.fuentedato" scope="page" /> 
-<%
-        JSONObject obje = new JSONObject();
-        obje = new JSONObject();
-        
-        String descri_rol;
-        String descri_modulo;
-        String select_rol;
-         String id=  "";
-        descri_rol= request.getParameter("descri_rol");
-        descri_modulo= request.getParameter("descri_modulo");
-        select_rol= request.getParameter("data.select[c]");
-        String[] array_modulo= request.getParameterValues("permisos");
-        String mensaje="";
-        String tipo_mensaje="";
-        String verificacion_commit="";
-        controles.VerificarConexion();
-        fuente.setConexion(clases.controles.connectSesion);
-         int i=0;
-        
-        
-    try{
-         CallableStatement call2;
-        call2 = clases.controles.connectSesion.prepareCall("exec [stp_mae_yemsys_insert_permisos_estado] @idrol='"+select_rol+"'");
-        call2.execute(); 
-     
-        int asda=array_modulo.length;
-        CallableStatement call;
-         for(i=0; i<array_modulo.length;)//mientras que i sea menor que grilla_array 
-        { 
-         id=array_modulo[i];
-         String [] separar_columnas=id.split("_");
-         String col1="";
-         col1=separar_columnas[0];                               
-        call = clases.controles.connectSesion.prepareCall("{call [stp_mae_yemsys_insert_permisos](?,?,?,?)}");
-        call.setString(1, select_rol);
-        call.setString(2, id);
-        call.registerOutParameter(3, java.sql.Types.VARCHAR);
-        call.registerOutParameter(4, java.sql.Types.VARCHAR);
-        call.execute(); 
-        tipo_mensaje=call.getString(3);
-        mensaje=call.getString(4);
-             
-             i++;
+<% JSONObject obje = new JSONObject();
+    obje = new JSONObject();
+    String select_rol;
+    select_rol = request.getParameter("data.select[c]");
+    String mensaje = "";
+    int tipo_respuesta = 0;
 
-         } 
+    try {
+        String[] array_modulo = request.getParameterValues("permisos");
+        String Line = String.join(",", array_modulo);
         
+
+        JSONArray jsonArray = Arrays.stream(Line.split(","))
+                .map(id -> new JSONObject().put("id", Integer.parseInt(id)))
+                .collect(JSONArray::new, JSONArray::put, JSONArray::put);
+
+        // jsonString ahora contiene la representación en formato de cadena del JSONArray
+        String jsonString = jsonArray.toString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        // Deserializar la cadena en un array de objetos permisos
+        permisos[] pp1 = mapper.readValue(jsonString, permisos[].class);
+       
         
-        } catch (Exception ex) {
-     }
- finally {
-      controles.DesconnectarBDsession();
-        obje.put("mensaje",mensaje );
-        obje.put("tipo_mensaje",tipo_mensaje );
+        // Crear SQLServerDataTable y llenarlo
+        SQLServerDataTable DataTableGrilla = new SQLServerDataTable();
+        DataTableGrilla.addColumnMetadata("id", java.sql.Types.VARCHAR);
+        
+        for (permisos contenido : pp1) {
+            DataTableGrilla.addRow(contenido.id.trim());
+            
+        }
+        connection.setAutoCommit(false);
+        
+        CallableStatement call2;
+        call2 = connection.prepareCall("exec [stp_mae_yemsys_insert_permisos_estado] @idrol='" + select_rol + "'");
+        call2.execute();
+        
+        CallableStatement callableStatement = null;
+        callableStatement = connection.prepareCall("{call [stp_mae_yemsys_insert_permisos](?,?,?,?)}");
+        callableStatement.setString(1, select_rol);
+        callableStatement.setObject(2, DataTableGrilla);
+        callableStatement.registerOutParameter(3, java.sql.Types.INTEGER);
+        callableStatement.registerOutParameter(4, java.sql.Types.VARCHAR);
+        callableStatement.execute();
+
+        callableStatement.registerOutParameter("tipo_respuesta", java.sql.Types.INTEGER);
+        callableStatement.registerOutParameter("mensaje", java.sql.Types.VARCHAR);
+        callableStatement.execute();
+        tipo_respuesta = callableStatement.getInt("tipo_respuesta");
+        mensaje = callableStatement.getString("mensaje");
+        connection.commit(); // Commit the transaction if everything is successful
+    } catch (Exception ex) {
+        mensaje = ex.toString();
+        connection.rollback(); // Rollback the transaction in case of an exception
+    } finally {
+
+        connection.close();
+
+        obje.put("mensaje", mensaje);
+        obje.put("tipo", tipo_respuesta);
         out.print(obje);
- }
+        
+    }
 %>
 

@@ -421,45 +421,18 @@ function registrar_agregar_permisos()
     {
         if (result.value)
         {
-            $.ajax({
-                type: "POST",
+            
+             $.ajax({
+                type: 'POST',
                 url: ruta_cruds_prin + "crud_agregar_permisos.jsp",
                 data: $("#form_add_permisos").serialize(),
                 beforeSend: function (xhr) {
-                    cargar_load("Consultando...");
+                  procesando_swal();
                 },
-                success: function (result)
-                {
-                    cerrar_load();
-                    if (result.tipo_mensaje == "2") {
-                        swal.fire({
-                            type: 'success',
-                            text: result.mensaje,
-                            confirmButtonText: "CERRAR"
-                        });
-
-
-
-
-                    }
-                    if (result.tipo_mensaje == "1") {
-                        swal.fire({
-                            type: 'success',
-                            text: result.mensaje,
-                            confirmButtonText: "CERRAR"
-                        });
-
-
-
-
-                    }
-                },
-         error: function(XMLHttpRequest, textStatus, errorThrown) {
-             if(XMLHttpRequest.status==404 || XMLHttpRequest.status==500){
-                  location.reload();
-             }
-         }
-
+                success: function (data) {
+                    aviso_generico(data.tipo, data.mensaje);
+                   
+                }
             });
         }
     });

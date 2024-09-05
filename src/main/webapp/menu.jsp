@@ -8,10 +8,10 @@
             String nav_area = (String) sesionOk.getAttribute("nav_area");
             String notificacion = (String) sesionOk.getAttribute("notificacion");
         %>
-         <meta charset="utf-8">
+        <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Ita Ka avo Sistema</title>
-      
+
         <script src="plugins/fontAwesome.js" type="text/javascript"></script>
         <link href="plugins/ionicons.min.css" rel="stylesheet" type="text/css"/>
         <!-- Tempusdominus Bootstrap 4 -->
@@ -22,7 +22,7 @@
         <link rel="stylesheet" href="plugins/jqvmap/jqvmap.min.css">
         <!-- Theme style -->
         <link href="dist/css/adminlte.css" rel="stylesheet" type="text/css"/>
-         <!-- overlayScrollbars -->
+        <!-- overlayScrollbars -->
         <link rel="stylesheet" href="plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
         <!-- Daterange picker -->
         <link rel="stylesheet" href="plugins/daterangepicker/daterangepicker.css">
@@ -30,10 +30,10 @@
         <link rel="stylesheet" href="plugins/summernote/summernote-bs4.min.css">
         <link href="plugins/lib/themes/default.css" rel="stylesheet" id="theme_base" />
         <link href="plugins/lib/themes/default.date.css" rel="stylesheet" id="theme_date" />
-       
-         <link href="css/hover_datatable.css" rel="stylesheet" type="text/css"/>
- 
-         <link rel="stylesheet" type="text/css" href="plugins/autoFill.bootstrap4.min.css"/>
+
+        <link href="css/hover_datatable.css" rel="stylesheet" type="text/css"/>
+
+        <link rel="stylesheet" type="text/css" href="plugins/autoFill.bootstrap4.min.css"/>
         <link rel="stylesheet" type="text/css" href="plugins/buttons.bootstrap4.css"/>
         <link rel="stylesheet" type="text/css" href="plugins/colReorder.bootstrap4.css"/>
         <link href="plugins/dataTables.dateTime.css" rel="stylesheet" type="text/css"/>
@@ -43,8 +43,8 @@
         <link href="plugins/responsive.bootstrap4.css" rel="stylesheet" type="text/css"/>
         <link href="plugins/rowGroup.bootstrap4.css" rel="stylesheet" type="text/css"/>
         <link href="plugins/rowReorder.bootstrap4.css" rel="stylesheet" type="text/css"/>
-        
-        
+
+
         <link rel="stylesheet" type="text/css" href="plugins/scroller.bootstrap4.css"/>
         <link rel="stylesheet" type="text/css" href="plugins/searchBuilder.bootstrap4.css"/>
         <link rel="stylesheet" type="text/css" href="plugins/searchPanes.bootstrap4.css"/>
@@ -63,13 +63,16 @@
         <link href="plugins/jquery-ui.multidatespicker.css" rel="stylesheet" type="text/css"/>
         <link href="css/parpadeo.css" rel="stylesheet" type="text/css"/>
         <link href="plugins/chart.js/Chart.css" rel="stylesheet" type="text/css"/>
-        
+
         <link rel="stylesheet" href="plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
-         <link href="plugins/font-awesome.min.css" rel="stylesheet" type="text/css"/>
-                         
-                         
-                         
-                         
+        <link href="plugins/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+        <link href="css/CSSdataTableV2_1_5.css" rel="stylesheet" type="text/css"/>
+        <!--para notificaciones toastr-->
+        <link href="css/toastr.min.css" rel="stylesheet" type="text/css"/>
+        <link href="css/toastr.css" rel="stylesheet" type="text/css"/>
+
+
+
     </head>
     <input type="hidden" id="clasificadora_menu" value="<%=area%>">
 
@@ -87,8 +90,8 @@
             <nav class="main-header navbar navbar-expand navbar-white navbar-light ">
                 <!-- Left navbar links -->
                 <ul class="navbar-nav">
-                   
-                    
+
+
                     <li class="nav-item">
                         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
                     </li>
@@ -102,9 +105,9 @@
 
                 </ul>
                 <ul class="navbar-nav ml-auto">
-                    
-                    
-           
+
+
+
 
 
                     <li class="nav-item">
@@ -196,10 +199,10 @@
 
                         </div>
 
-                                    
-    
-    
- 
+
+
+
+
 
                         <div class="modal fade bd-example-modal-xl" id="modal_reporte_varios" tabindex="-1" role="dialog"   aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
 
@@ -231,7 +234,7 @@
 
 
                                     <h5><div class="modal-body bg-navy" id="ribbon_titulo"></h5> 
-                                   
+
                                     <div class="modal-body" id="ribbon_descripcion"></div> 
 
 
@@ -239,13 +242,13 @@
 
 
                                     <div class="modal-footer">
-                                       
-                                           
-                                           
+
+
+
                                         <a  id="form_pdf_manual" style='color: black' target="_blank"><i class='fa fa-file-pdf-o' style='color: red'></i>  Manual de usuario  </a> 
-                                            
-                                        
-                                        
+
+
+
                                     </div>
                                 </div>
                             </div>
@@ -260,7 +263,7 @@
 
                 </section>
 
-                 
+
 
                 <!-- Control Sidebar -->
                 <aside class="control-sidebar control-sidebar-light" style="top: 46.5938px;">
@@ -282,9 +285,9 @@
 
                         <div class="pl-2 pr-2 col-12">
                             <div class="form-group">
-                                 
+
                                 <a href="apk/itkv.apk" class="mx-auto btn btn-warning form-control "><i class="fa fa-fw fa-download"></i> Descargar APP</a>
-                                
+
                             </div>
                         </div>
                     </div>
@@ -353,11 +356,11 @@
             <!-- AdminLTE App -->
             <script src="dist/js/adminlte.js"></script>
             <script src="plugins/numeral.min.js" type="text/javascript"></script>
-            
+
             <script src="plugins/chart_1.js" type="text/javascript"></script>
-            
+
             <script src="plugins/chartjs-plugin-datalabels.js" type="text/javascript"></script>
-            
+
             <script src="plugins/selectPicker/bootstrap-select.min.js" type="text/javascript"></script>
             <script src="plugins/jquery.loadingModal.js" type="text/javascript"></script>
             <script src="plugins/sweetalert2/sweetalert2.all.min.js" type="text/javascript"></script>
@@ -376,10 +379,10 @@
             <script src="plugins/jszip.min.js" type="text/javascript"></script>
             <script type="text/javascript" src="plugins/pdfmake.min.js"></script>
             <script type="text/javascript" src="plugins/vfs_fonts.js"></script>
-            
+
             <script src="plugins/jquery.dataTables.min.js" type="text/javascript"></script> 
             <script src="plugins/dataTables.bootstrap4.min.js" type="text/javascript"></script>
-            
+
             <script type="text/javascript" src="plugins/dataTables.autoFill.min.js"></script>
             <script type="text/javascript" src="plugins/autoFill.bootstrap4.min.js"></script>
             <script type="text/javascript" src="plugins/dataTables.buttons.min.js"></script>
@@ -397,11 +400,16 @@
             <script src="js/principal.js?v=3.5" type="text/javascript"></script>
             <script src="js/itkv/itkv_funciones.js?v=3.5" type="text/javascript"></script>
             <script src="plugins/autoNumeric.js" type="text/javascript"></script>
-             <script src="plugins/compressor.min.js" type="text/javascript"></script>
- 
- 
-        
+            <script src="plugins/compressor.min.js" type="text/javascript"></script>
+            <script src="js/control_bidones_itkv/control_bidones_itkv.js" type="text/javascript"></script>
+            <!--para notificaciones toastr-->
+            <script src="js/toastr.min.js" type="text/javascript"></script>
+            <!--<script src="js/JSdataTablesV2_1_5.js" type="text/javascript"></script>-->
+
+
+
+
     </body>
 </html> 
 
- 
+
