@@ -4,6 +4,7 @@
  */
 
 let tablaBidones;
+let tablaInformeBidones;
 /*ir contenedor control bidones */
 function irControlMovimientosBidones() {
     $.ajax({
@@ -20,14 +21,13 @@ function irControlMovimientosBidones() {
                 "destroy": true,
                 "language": {
                     "url": "https://cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-                }/*,
-                 "columnDefs":[{
-                 className:"tr-hover", targets:[0,1,2,3,4,5,6,,7,8,9,10]      
-                 }]*/
-            }).order([0, 'desc']);
+                }
+            });
 
             $('.selectpicker').selectpicker({size: '10'
             });
+
+            cargar_estilo_calendario_global("dd/mm/yyyy");
         }
     });
 }
@@ -41,47 +41,6 @@ function resetForm() {
 function clearTable() {
     tablaBidones.clear().draw();
 }
-
-
-/* Captura los eventos al oprimir Enter o escanear con el lector */
-function escanCodBarraBidon() {
-    let estado = $("#tipo_mov").find(':selected').attr('estado');
-    let cod_barra = $("#cod_barra").val();
-    
-    if (event.keyCode === 13 || event.which === 13) { // Si presiona Enter
-        if (estado == "E") {
-            agregarBidonGrilla(); // Agrega un bidón si está en estado "E"
-            $("#cod_barra").val(""); // Limpia el campo del código de barra
-        } 
-        
-        if (estado == "R" || estado == "D") {
-            // Verifica si el código de barra existe en la columna 1 de la tabla
-            var codBarExists = tablaBidones.column(1).data().toArray().includes(cod_barra);
-            
-            if (codBarExists) {
-                // Si el código de barra existe, encuentra la fila correspondiente
-                tablaBidones.rows().every(function() {
-                    let data = this.data();
-                    
-                    // Verifica si el código de barra en la columna 1 coincide
-                    if (data[1] === cod_barra) {
-                        // Encuentra el checkbox de esta fila y lo marca como checked
-                        let $row = $(this.node());
-                        let $checkbox = $row.find('input[type="checkbox"]');
-                        
-                        $checkbox.prop('checked', true); // Marca el checkbox
-                        $checkbox.trigger('change'); // Dispara el evento onchange
-                    }
-                });
-            } else {
-                // Si no existe, puedes manejarlo aquí (mostrar alerta o alguna acción)
-                console.warn("Código de barra no encontrado en la tabla.");
-            }
-        }
-    }
-}
-
-
 
 function isEmpty(...fields) {
     return fields.some(field => field === "");
@@ -103,7 +62,7 @@ function agregarBidonGrilla() {
             estado = $("#tipo_mov").find(':selected').attr('estado');
 
     const table = $("#tabla-bidones").DataTable();
-    var codBarExists = table.column(1).data().toArray().includes(cod_barra);
+    var codBarExists = table.column(2).data().toArray().includes(cod_barra);
     if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art)) {
         toastr.error("Los campos deben estar completos, s&oacute;lo la OT es opcional.", "Error");
         return;
@@ -148,6 +107,9 @@ function agregarBidonGrilla() {
                             res.id
                             );
                     toastr.success(res.mensaje, "El bid&oacute;n " + res.id);
+                } else{
+                    toastr.error(res.mensaje, "Error tipo:"+res.tipo+" id: "+res.id);
+                    console.log(res.mensaje);
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -165,7 +127,10 @@ function agregarBidonGrilla() {
 
 /*esta funcion agrega la nueva fila*/
 function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, resp, f_dev, cantidad, cantidadR, accion) {
+    // Obtener la cantidad de filas actuales para calcular el índice
+    const index = tablaBidones.rows().count() + 1; // Agregar 1 para obtener el nuevo índice
     const newData = [
+        index,
         mov_id,
         cod_barra,
         cod_barra2,
@@ -178,9 +143,17 @@ function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, res
         cantidadR,
         '<button id=\"btn' + accion + '\" class=\"btn btn-warning text-center\" onclick=\"deshacerCargaBidon(' + accion + ')\"><i class=\"fa-solid fa-trash\"></i> Deshacer</button>'
     ];
-    var rowNode = tablaBidones.row.add(newData).order([0, 'desc']).draw(false).node();
-    $(rowNode).attr('id', 'row' + accion);//AGREGA ID AL <tr> FILA.
+    // Agregar la nueva fila a la tabla
+    var rowNode = tablaBidones.row.add(newData).draw(false).node();
+
+    // Asignar ID a la fila recién agregada
+    $(rowNode).attr('id', 'row' + accion);
+
+    // Limpiar el campo de código de barras
     $('#cod_barra').val('');
+
+    // Volver a ordenar las filas en orden descendente según el índice (columna 0)
+    tablaBidones.order([0, 'desc']).draw();
 }
 
 /*mostrar/ocultar opciones de acuerdo al tipo de movimiento*/
@@ -208,11 +181,12 @@ function optionTipoMov(tipo) {
             break;
         case "2":
             changeHeaderColor("bg-primary bg-danger", "bg-warning");
-            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar");
+            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot");
             break;
         case "4":
             changeHeaderColor("bg-primary bg-warning", "bg-danger");
-            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar");
+            toggleElements("#row_ot, #row_codebar, #content_tb_bidones", "#row_responsable, #row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot");
+            traerGrillaBidones("TODOS");
             break;
         default:
             toggleElements("", "#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones");
@@ -221,18 +195,7 @@ function optionTipoMov(tipo) {
 }
 ;
 
-/*esta funcion genera dinamicamente una grilla en el caso que el responsable tenga bidones en estado P de pendiente*/
-function traerGrillaBidones(responsable) {
-    let tipo = $("#tipo_mov").val(); // Capturamos el valor de tipo_mov
-    let estado;
-    if (tipo == 1) {
-        estado = "P";
-    } else if (tipo == 2) {
-        estado = "E";
-    } else {
-        estado = "R";
-    }
-
+function crearResponsableBidones(){
     if ($("#responsable").val() === "OTROS") {
         $("#responsable_por").show();
         $("#responsable_por").val("");
@@ -247,6 +210,20 @@ function traerGrillaBidones(responsable) {
     } else {
         $("#responsable_por").hide();
         $("#responsable_por").removeAttr("required");
+    }
+}
+
+/*esta funcion genera dinamicamente una grilla en el caso que el responsable tenga bidones en estado P de pendiente*/
+function traerGrillaBidones(responsable) {
+    let tipo = $("#tipo_mov").val(); // Capturamos el valor de tipo_mov
+    let estado;
+    if (tipo == 1) {
+        estado = "P";
+    } else if (tipo == 2) {
+        estado = "E";
+    } else {
+        estado = "R";
+    }
         $.ajax({
             type: 'post',
             url: "consultas/control_bidones_itkv/consulta_obj_bidones_resp.jsp",
@@ -259,9 +236,11 @@ function traerGrillaBidones(responsable) {
             },
             success: function (res) {
                 let bidones = res.bidones;
+                let index = 1; // Iniciamos un contador de índice
                 if (estado == "P") {
                     bidones.forEach(fila => {
                         let newRow = tablaBidones.row.add([
+                            index, // Añadir el índice en la primera columna
                             fila.mov_id,
                             fila.codigoBarra,
                             fila.codigoBarra2,
@@ -276,28 +255,39 @@ function traerGrillaBidones(responsable) {
                         ]).draw().node(); // Obtén el nodo del `tr` recién creado
 
                         $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
+
+                        index++; // Aumentamos el contador de índice
                     });
+
+                    // Ahora ordena los datos en la columna 1 (mov_id) de mayor a menor
+                    tablaBidones.order([1, 'desc']).draw(); // 'desc' para ordenar de mayor a menor en la columna mov_id
                 } else if (estado == "E") {
                     bidones.forEach(fila => {
                         let newRow = tablaBidones.row.add([
+                            index,
                             fila.mov_id,
                             fila.codigoBarra,
-                            `<input type="text" id="code${fila.mov_id}" class="form-control editable" value="${fila.codigoBarra2}" style="display:none;" />`, // Celda editable para codigoBarra2
+                            `<input type="text" id="code${fila.mov_id}" class="form-control editable" value="${fila.codigoBarra2}" style="display:none;" onkeypress="return escanCodBarReasig(${fila.mov_id}, this.value)"/>`, // Celda editable para codigoBarra2
                             fila.nombre,
                             fila.presentacion,
                             fila.ot,
                             fila.responsable,
                             fila.fechaDevolucion,
                             fila.cantidadEntregada,
-                            `<input type="text" id="cant${fila.mov_id}" class="form-control editable" value="${fila.cantidadRecibida}" style="display:none;" />`, // Celda editable para cantidadRecibida
+                            `<input type="number" id="cant${fila.mov_id}" class="form-control editable" value="${fila.cantidadRecibida}" style="display:none;" onblur="cantidadRestante(${fila.mov_id}, this.value)"/>`, // Celda editable para cantidadRecibida
                             `<input type="checkbox" class="chk-mov-id" value="${fila.mov_id}" onchange="mostrarOcultarCeldabidon(${fila.mov_id})"/>` // Checkbox para identificar el mov_id
                         ]).draw().node(); // Obtén el nodo del `tr` recién creado
 
                         $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
+
+                        index++;
+                        // Ahora ordenamos los datos en la columna 0 mov_id de mayor a menor 
+                        tablaBidones.order([0, 'desc']).draw();
                     });
                 } else {
                     bidones.forEach(fila => {
                         let newRow = tablaBidones.row.add([
+                            index,
                             fila.mov_id,
                             fila.codigoBarra,
                             fila.codigoBarra2,
@@ -308,10 +298,14 @@ function traerGrillaBidones(responsable) {
                             fila.fechaDevolucion,
                             fila.cantidadEntregada,
                             fila.cantidadRecibida,
-                            `<input type="checkbox" class="chk-mov-id" value="ch${fila.mov_id}" />` // Checkbox para identificar el mov_id
+                            `<input type="checkbox" class="chk-mov-id" value="${fila.mov_id}" onchange="mostrarOcultarCeldabidon(${fila.mov_id})"/>` // Checkbox para identificar el mov_id
                         ]).draw().node(); // Obtén el nodo del `tr` recién creado
 
                         $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
+
+                        index++;
+                        // Ahora ordenamos los datos en la columna 0 mov_id de mayor a menor 
+                        tablaBidones.order([0, 'desc']).draw();
                     });
 
                 }
@@ -341,35 +335,106 @@ function traerGrillaBidones(responsable) {
                 }
             }
         });
+}
+
+
+/* Captura los eventos al oprimir Enter o escanear con el lector */
+function escanCodBarraBidon() {
+    let estado = $("#tipo_mov").find(':selected').attr('estado');
+    let cod_barra = $("#cod_barra").val();
+
+    if (event.keyCode === 13 || event.which === 13) { // Si presiona Enter
+        if (estado == "E") {
+            agregarBidonGrilla(); // Agrega un bidón si está en estado "E"
+            $("#cod_barra").val(""); // Limpia el campo del código de barra
+        }
+
+        if (estado == "R" || estado == "D") {
+            // Verifica si el código de barra existe en las columnas 2 o 3 de la tabla
+            var codBarExists = tablaBidones.column(2).data().toArray().includes(cod_barra);
+            var codBarExists2 = tablaBidones.column(3).data().toArray().includes(cod_barra);
+
+            if (codBarExists || codBarExists2) {
+                // Desactivar la paginación temporalmente para manipular la fila
+                tablaBidones.page.len(-1).draw(false); // -1 muestra todas las filas
+
+                // Si el código de barra existe, encuentra la fila correspondiente
+                tablaBidones.rows().every(function () {
+                    let data = this.data();
+                    if (data[2] === cod_barra || data[3] === cod_barra) {
+                        // Encuentra el checkbox de esta fila y lo marca como checked
+                        let $row = $(this.node());
+                        let $checkbox = $row.find('input[type="checkbox"]');
+
+                        $checkbox.prop('checked', true); // Marca el checkbox
+                        $checkbox.trigger('change'); // Dispara el evento onchange
+                    }
+                });
+                $("#cod_barra").val(""); // Limpia el campo del código de barra
+            } else {
+                // Si no existe, puedes manejarlo aquí (mostrar alerta o alguna acción)
+                toastr.error("Código de barra no encontrado en la tabla. " + cod_barra, "Error");
+                console.log("Código de barra no encontrado en la tabla.");
+                $("#cod_barra").val(""); // Limpia el campo del código de barra
+            }
+        }
     }
 }
 
-/*establecer en editable las celdas seleccionadas con el checkbox*/
+/* Función para mover la fila seleccionada a la parte superior de la tabla */
 function mostrarOcultarCeldabidon(mov_id) {
-    // Verificamos si el checkbox está marcado o no
     let checkbox = $("input[value='" + mov_id + "']");
+    let $row = $('#row' + mov_id); // Accede al <tr> de la fila correspondiente
+    let data = tablaBidones.row($row).data(); // Captura los datos actuales de la fila
+    let highestIndex = 0; // Para almacenar el índice más alto actual en la columna 0
+    let currentPage = tablaBidones.page(); // Guarda la página actual antes de cambiar la paginación
+    let estado = $("#tipo_mov").find(':selected').attr('estado');
 
+    // Verificar si el checkbox está marcado o no
     if (checkbox.is(":checked")) {
-        // Si el checkbox está marcado, mostramos el input oculto
-        $("#code" + mov_id).show();
-        $("#cant" + mov_id).show();
+        // Desactivar la paginación temporalmente si no se encuentra en la primera página
+        if (currentPage !== 0) {
+            tablaBidones.page.len(-1).draw(false); // -1 muestra todas las filas            
+        }
 
-        // Movemos la fila a la parte superior de la tabla
-        let table = tablaBidones;
-        let $row = $('#row' + mov_id); // Accede al <tr> de la fila correspondiente
+        // Capturar el índice más alto actual en la tabla (columna 0)
+        tablaBidones.column(0).data().each(function (value) {
+            highestIndex = Math.max(highestIndex, value);
+        });
 
-        let data = table.row($row).data(); // Captura los datos de la fila
-        table.row($row).remove().draw(); // Remueve la fila
-        table.row.add(data).draw(); // Añade de nuevo la fila con los mismos datos en la parte superior
+        // Actualizamos el índice de la fila a ser mayor al número actual más alto
+        data[0] = highestIndex + 1;
 
+        // Remover la fila original
+        tablaBidones.row($row).remove().draw(false);
+
+        // Agregar la fila con el nuevo índice al principio
+        let newRow = tablaBidones.row.add(data).draw(false).node();
+        $(newRow).attr('id', 'row' + mov_id); // Agregar nuevamente el id a la nueva fila
+
+        // Ordenar la tabla de acuerdo a la columna 0 en orden descendente
+        tablaBidones.order([0, 'desc']).draw(false);
+
+        // Volver a seleccionar el checkbox de la fila redibujada y marcarlo
+        let newCheckbox = $(newRow).find('input[type="checkbox"]');
+        newCheckbox.prop('checked', true); // Marcar el checkbox redibujado
+
+        // Si el estado es "R", muestra los inputs ocultos
+        if (estado === "R") {
+            $("#code" + mov_id).show();
+            $("#cant" + mov_id).show();
+        }
+
+        // Restaurar la paginación original y volver a la página en la que estábamos
+        tablaBidones.page.len(10).draw(false); // Cambia a paginación normal (por ejemplo, 10 filas por página)
     } else {
-        // Si se desmarca, ocultamos el input
-        $("#code" + mov_id).hide();
-        $("#cant" + mov_id).hide();
+        // Si se desmarca y estamos en estado "E", ocultamos el input
+        if (estado === "E") {
+            $("#code" + mov_id).hide();
+            $("#cant" + mov_id).hide();
+        }
     }
 }
-
-
 
 /*con esta función ejecutamos un crud para borrar la fila luego de hacer click en el boton deshacer
  * si tiene exito remueve la fila*/
@@ -400,7 +465,7 @@ function confirmarMovBidon() {
         // Recorre cada fila de la tabla y obtiene los mov_id de la columna en posición 0
         tablaBidones.rows().every(function () {
             let data = this.data();
-            ids.push(data[0]);  // posición mov_id
+            ids.push(data[1]);  // posición mov_id
         });
     } else if (estado == "R" || estado == "D") {
         // Recorre cada fila de la tabla y verifica si el checkbox está marcado
@@ -411,7 +476,7 @@ function confirmarMovBidon() {
             // Verifica si el checkbox está marcado
             if (checkbox.is(':checked')) {
                 let data = this.data();
-                ids.push(data[0]);  // Agrega el mov_id (posición 0) al array si está marcado
+                ids.push(data[1]);  // Agrega el mov_id (posición 0) al array si está marcado
             }
         });
     }
@@ -452,3 +517,240 @@ function confirmarMovBidon() {
         toastr.warning("No hay movimientos para actualizar", "Advertencia");
     }
 }
+
+function escanCodBarReasig(mov_id, cod_bar) {
+
+    if (event.keyCode === 13 || event.which === 13 || event.BLUR) {
+
+        reasignarCodBar(mov_id, cod_bar);
+
+    }
+}
+
+/*función que agrega un nuevo nuevo código de barras al bidon asignado por mov_id*/
+function reasignarCodBar(mov_id, cod_bar) {
+    $.ajax({
+        type: "post",
+        url: "cruds/control_bidones_itkv/crud_reasig_code_bar.jsp",
+        data: {
+            mov_id: mov_id,
+            cod_bar: cod_bar
+        },
+        beforeSend: function () {
+
+        },
+        success: function (res) {
+            if (res.tipo == 1) {
+                aviso_generico(res.tipo, res.mensaje);
+            }
+        }
+    });
+}
+
+
+/*función que agrega un nuevo nuevo código de barras al bidon asignado por mov_id*/
+function cantidadRestante(mov_id, cant) {
+    $.ajax({
+        type: "post",
+        url: "cruds/control_bidones_itkv/crud_carga_cant_rest.jsp",
+        data: {
+            mov_id: mov_id,
+            cant: cant
+        },
+        beforeSend: function () {
+
+        },
+        success: function (res) {
+            if (res.tipo == 1) {
+                aviso_generico(res.tipo, res.mensaje);
+            } else {
+                aviso_generico(res.tipo, res.mensaje);
+            }
+        }
+    });
+}
+
+/************************************************************************INFORME BIDONES*********************************************************************************/
+/*contenedor informe movimiento bidones*/
+function irInformeMovimientosBidones() {
+    $.ajax({
+        type: "post",
+        url: "contenedores/control_bidones_itkv/contenedor_informe_bidones.jsp",
+        beforeSend: function () {
+            $("#contenedor_principal").html("");
+            cargar_load("....Cargando");
+        },
+        success: function (res) {
+            $("#contenedor_principal").html(res);
+            cerrar_load();
+            initDataTableInfoBidones();
+            $('.selectpicker').selectpicker();
+            cargar_estilo_calendario_global("dd/mm/yyyy");
+            $("#tipo_mov").change(function () {
+                let tipo = $("#tipo_mov").val();
+                if (tipo !== "") {
+                    $("#btnGenRepBidon").removeAttr("disabled");
+                } else {
+                    $("#btnGenRepBidon").attr("disabled", "disabled");
+                    $("#div_cont_inf_bidones").hide();
+                }
+            });
+        }
+    });
+}
+
+function actualizarTitulo(desde, hasta) {
+    var estado = $("#tipo_mov option:selected").text();
+    var tipo = $("#tipo_mov").val();
+    var titulo;
+    if (tipo !== "3") {
+       titulo = "MOVIMIENTOS BIDONES EN ESTADO " + estado + " - " + desde + " - " + hasta;
+    } else{
+        titulo = "MOVIMIENTOS BIDONES EN ESTADO " + estado;
+    }
+    $('#card-title-detalle').text(titulo);
+}
+
+
+function initDataTableInfoBidones(desde, hasta, estado) {
+    tablaInformeBidones = $("#tabla-informe-bidones").DataTable({
+        "destroy": true,
+        dom: "Bfrtip",
+        "language":
+                {
+                    sSearch: "Buscar:",
+                    sLengthMenu: "Mostrar _MENU_ registros",
+                    sZeroRecords: "No se encontraron resultados",
+                    sEmptyTable: "Ning&uacute;n dato disponible en esta tabla",
+                    sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                    sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                    sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                    sInfoThousands: ",",
+                    sLoadingRecords: "Cargando...",
+                    oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"},
+                    buttons: {copyTitle: "DATOS COPIADOS", copySuccess: {_: "%d FILAS COPIADAS"}}
+                },
+        buttons: [
+            {
+                extend: 'colvis',
+                text: 'MOSTRAR / OCULTAR',
+                exportOptions: {
+                    columns: ':visible'
+                }
+            },
+            {
+                extend: 'excelHtml5',
+                text: 'EXCEL',
+                title: 'INFORME MOVIMIENTOS BIDONES EN ESTADO ' + estado + ' - ' + desde + ' - ' + hasta, // Establecer el nombre del archivo aquí
+                exportOptions: {
+                    columns: ':visible'
+                }
+            },
+            {
+                extend: 'pdfHtml5',
+                text: 'PDF',
+                title: 'INFORME MOVIMIENTOS BIDONES EN ESTADO ' + estado + ' - ' + desde + ' - ' + hasta, // Establecer el nombre del archivo aquí
+                orientation: "landscape",
+                pageSize: "LEGAL",
+                customize: function (e) {
+                    (e.styles.title = {color: "white", fontSize: "20", background: "black", alignment: "center"}),
+                            (e.styles.tableHeader = {fontSize: "6"}),
+                            (e.styles.tableBodyEven = {fontSize: "6"}),
+                            (e.styles.tableBodyOdd = {fontSize: "6"}),
+                            (e.styles.tableFooter = {fontSize: "6"}),
+                            (e.styles["td:nth-child(2)"] = {width: "100px", "max-width": "100px"});
+                },
+                exportOptions: {
+                    columns: ':visible'
+                }
+            },
+            {
+                extend: 'print',
+                text: 'IMPRIMIR',
+                title: 'INFORME MOVIMIENTOS BIDONES EN ESTADO ' + estado + ' - ' + desde + ' - ' + hasta, // Establecer el nombre del archivo aquí
+                exportOptions: {
+                    columns: ':visible'
+                }
+            }, // Botón para IMPRIMIR
+            {
+                extend: 'copy',
+                text: 'COPIAR GRILLA',
+                exportOptions: {
+                    columns: ':visible'
+                }
+            } // Botón para copiar al portapapeles
+        ],
+        keys: {clipboard: !1}
+    });
+}
+
+function generarReporteBidones() {
+    let estado = $("#tipo_mov").find(":selected").attr("estado");
+    let fecha_desde = $("#desde").val();
+    let fecha_hasta = $("#hasta").val();
+    $.ajax({
+        type: "post",
+        url: "consultas/control_bidones_itkv/consulta_obj_bidones_estado.jsp",
+        data: {
+            estado: estado,
+            desde: fecha_desde,
+            hasta: fecha_hasta
+        },
+        beforeSend: function () {
+            tablaInformeBidones.clear().draw();
+        },
+        success: function (res) {
+            initDataTableInfoBidones(fecha_desde, fecha_hasta, estado);
+            actualizarTitulo(fecha_desde, fecha_hasta);
+            let bidones = res.bidones;
+            let index = 1;
+            if (estado !== "") {
+                bidones.forEach(fila => {
+                    tablaInformeBidones.row.add([
+                        index,
+                        fila.mov_id,
+                        fila.codigoBarra,
+                        fila.codigoBarra2,
+                        fila.nombre,
+                        fila.presentacion,
+                        fila.ot,
+                        fila.responsable,
+                        fila.fechaEstimadaDev,
+                        fila.fechaEntrega,
+                        fila.fechaDevolucion,
+                        fila.fechaDestruccion,
+                        fila.cantidadEntregada,
+                        fila.cantidadRecibida
+                    ]).draw();
+                    index++;
+                });
+
+                // Aplicar el multifiltro aquí después de que las filas estén generadas
+                tablaInformeBidones.columns().every(function () {
+                    let column = this;
+                    let title = $(column.header()).text(); // Obtén el título de la columna
+
+                    let select = $('<select class="selectpicker" data-live-search="true" title="' + title + '"><option value=""></option></select>')
+                            .appendTo($(column.footer()).empty())
+                            .on('change', function () {
+                                let val = $.fn.dataTable.util.escapeRegex($(this).val());
+                                column.search(val ? '^' + val + '$' : '', true, false).draw();
+                            });
+
+                    column.data().unique().sort().each(function (d, j) {
+                        select.append('<option value="' + d + '">' + d + '</option>');
+                    });
+                    // Inicializa selectpicker con container: 'body' para los selects dinámicos
+                    select.selectpicker({
+                        container: 'body'  // Para los selects generados dinámicamente
+                    });
+                });
+
+                $("#div_cont_inf_bidones").show();
+            } else {
+                $("#div_cont_inf_bidones").hide();
+            }
+        }
+    });
+}
+

@@ -96,7 +96,7 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label for="dev_estimada">Devolución estimada</label>
-                            <input type="date" id="dev_estimada" name="dev_estimada" class="form-control form-control-sm">
+                            <input type="text" id="dev_estimada" name="dev_estimada" class="datepicker form-control">
                         </div>
                     </div>
                 </div>
@@ -172,6 +172,7 @@
                     <table class="hover table table-xs compact w-100 table-striped table-bordered" id="tabla-bidones">
                         <thead>
                             <tr>
+                                <th class="text-center" width="80">#</th>
                                 <th class="text-center" width="80">ID_MOV</th>
                                 <th class="text-center" width="80">COD_BARRA</th>
                                 <th class="text-center" width="80">COD_BARRA REASIG</th>
