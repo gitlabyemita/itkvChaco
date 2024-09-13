@@ -44,11 +44,11 @@
             callableStatement.registerOutParameter(13, java.sql.Types.INTEGER); // tipo
             callableStatement.registerOutParameter(14, java.sql.Types.VARCHAR); // mensaje
             callableStatement.execute();
-
+            
             id = callableStatement.getInt(12);
             tipo = callableStatement.getInt(13);
             mensaje = callableStatement.getString(14);
-            if (tipo == 1) {
+            if (tipo == 1 || tipo == 2) {
                 connection.commit();
             } else {
                 connection.rollback();
