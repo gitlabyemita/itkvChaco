@@ -12,7 +12,7 @@
 
 <%  String version = "Test";
     String desc_version = "Test";
-    ResultSet rsTM, rsRes, rsArt, rsPre;
+    ResultSet rsTM, rsRes, rsResE,rsArt;
     Statement st = connection.createStatement();
     Statement st1 = connection.createStatement();
     Statement st3 = connection.createStatement();
@@ -20,11 +20,10 @@
     String query = "select * FROM [dbo].[cmb_tipo_movimiento]";
     String query2 = "select * from itkv_personales";
     String query3 = "select * from OITM where QryGroup5= 'Y'";
-    String query4 = "select * FROM [dbo].[cmb_presentacion]";
     rsTM = st.executeQuery(query);
     rsRes = st1.executeQuery(query2);
     rsArt = st3.executeQuery(query3);
-    rsPre = st4.executeQuery(query4);
+    rsResE = st4.executeQuery(query2);
 %>
 
 <div class="col-lg-20 ">
@@ -84,6 +83,22 @@
                         </div>
                     </div>
                 </div>
+                <div class="row" id="row_responsable_entrega" style="display: none">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="resp_entrega">Responsable a entregar</label>
+                            <select id="resp_entrega" name="resp_entrega" class="form-control selectpicker form-control-sm" data-live-search="true">
+                                <option value="">Seleccione responsable a entregar</option>                                                              
+                                <%while (rsResE.next()) {%>
+                                <option value="<%=rsResE.getString("id")%>" name="<%=rsResE.getString("nombre")%>"><%=rsResE.getString("nombre")%></option>                              
+                                <%}%>
+                                <option>OTROS</option>
+                            </select>
+                            <br>
+                            <input type="text" class="form-control " placeholder="Ingrese nombre del nuevo responsable" value="" required   id="responsable_por" style="display: none">
+                        </div>
+                    </div>
+                </div>
                 <div class="row" id="row_ot" style="display: none">
                     <div class="col-12">
                         <div class="form-group">
@@ -104,7 +119,7 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label for="articulo">Artículo</label>
-                            <select id="articulo" name="articulo" data-live-search="true" class="form-control form-control-sm selectpicker">   
+                            <select id="articulo" name="articulo" data-live-search="true" class="form-control form-control-sm selectpicker" onchange="traerSelectPresentacion(this.value)">   
                                 <option value="">Seleccione artículo</option>                              
                                 <%while (rsArt.next()) {%>
                                 <option value="<%=rsArt.getString("ItemCode")%>" name="<%=rsArt.getString("ItemName")%>"><%=rsArt.getString("ItemName")%></option>                              
@@ -118,10 +133,7 @@
                         <div class="form-group">
                             <label for="pres">Presentación</label>
                             <select id="pres" name="pres" data-live-search="true" class="form-control form-control-sm selectpicker">          
-                                <option value="">Seleccione presentación</option>                              
-                                <%while (rsPre.next()) {%>
-                                <option value="<%=rsPre.getString("pre_id")%>" cantidad="<%=rsPre.getString("pre_cantidad")%>" name="<%=rsPre.getString("pre_name")%>"><%=rsPre.getString("pre_name")%></option>                              
-                                <%}%>
+                                <option value="">Seleccione previamente un artículo</option>
                             </select>
                         </div>
                     </div>

@@ -18,7 +18,7 @@
         String estado = request.getParameter("estado");
         String query = "";
         if (res_id.equals("TODOS") && estado.equals("R")) {
-            query = "select * from cmb_registro_movimientos rm  left outer join cmb_presentacion pr on rm.rmov_pre_id = pr.pre_id where rm.rmov_estado = '" + estado + "'";
+            query = "select * from cmb_registro_movimientos rm  left outer join cmb_presentacion pr on rm.rmov_pre_id = pr.pre_id where rm.rmov_estado = '" + estado + "' and (rm.rmov_cantR = 0 or rm.rmov_cantR is null)";
         } else {
             query = "select * from cmb_registro_movimientos rm  left outer join cmb_presentacion pr on rm.rmov_pre_id = pr.pre_id where rm.rmov_res_id = " + res_id + " and rm.rmov_estado = '" + estado + "'";
         }

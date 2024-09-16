@@ -19,6 +19,7 @@ function irControlMovimientosBidones() {
             $("#contenedor_principal").html(res);
             tablaBidones = $("#tabla-bidones").DataTable({
                 "destroy": true,
+                dom: "Bfrtip",
                 "language": {
                     sSearch: "Buscar:",
                     sLengthMenu: "Mostrar _MENU_ registros",
@@ -27,9 +28,23 @@ function irControlMovimientosBidones() {
                     sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
                     sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
                     sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                    sInfoThousands: ",",
                     sLoadingRecords: "Cargando...",
-                    oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"}
-                }
+                    oPaginate: {sFirst: "Primero", sLast: "&uacute;ltimo", sNext: "Siguiente", sPrevious: "Anterior"}
+                },
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'MOSTRAR / OCULTAR',
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    }
+                ],
+                keys: {clipboard: !1},
+                // Configuración de paginación y buscador activada
+                "paging": true,
+                "searching": true
             });
 
             $('.selectpicker').selectpicker({size: '10'
@@ -87,6 +102,46 @@ function clearTable() {
 function isEmpty(...fields) {
     return fields.some(field => field === "");
 }
+
+function traerSelectPresentacion(cod_art) {
+    let name_art = $("#articulo").find(':selected').attr('name');
+    if (cod_art !== "") {
+        $.ajax({
+            type: "post",
+            url: "consultas/control_bidones_itkv/consulta_select_presentacion.jsp",
+            data: {cod_art: cod_art},
+            dataType: "json", // Aseguramos que la respuesta se trate como JSON
+            success: function (res) {
+                $("#pres").html(''); // Limpiar el select
+
+                // Verificamos si hay una lista de presentaciones
+                if (res.presentacion && res.presentacion.length > 0) {
+                    let newOption = ""; // Inicializamos correctamente como cadena vacía
+
+                    // Iteramos sobre las opciones recibidas y las agregamos al select
+                    res.presentacion.forEach(option => {
+                        newOption += `<option value="${option.pre_id}" cantidad="${option.pre_cantidad}" name="${option.pre_name}">${option.pre_name}</option>`;
+                    });
+
+                    // Insertamos las nuevas opciones en el select
+                    $("#pres").html("<option value=''>Seleccione presentaci&oacute;n para el art&iacute;culo " + name_art + "</option>" + newOption);
+                    $("#pres").selectpicker('refresh');
+                } else {
+                    $("#pres").html("<option value=''>No hay presentaciones disponibles para el art&iacute;culo " + name_art + "</option>");
+                    $("#pres").selectpicker('refresh');
+                }
+            },
+            error: function (err) {
+                console.error("Error al obtener las presentaciones: ", err);
+            }
+        });
+    } else {
+        $("#pres").html(''); // Limpiar el select
+        $("#pres").html("<option value=''>Seleccione previamente un art&iacute;culo</option>");
+        $("#pres").selectpicker('refresh');
+    }
+}
+
 
 /*con esta funcion ejecutamos el crud para luego agregar una nueva fila en la grilla*/
 function agregarBidonGrilla() {
@@ -260,19 +315,19 @@ function optionTipoMov(tipo) {
     switch (tipo) {
         case "1":
             changeHeaderColor("bg-warning bg-danger", "bg-primary");
-            toggleElements("#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones", "");
+            toggleElements("#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones", "#row_responsable_entrega");
             break;
         case "2":
             changeHeaderColor("bg-primary bg-danger", "bg-warning");
-            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot");
+            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot,#row_responsable_entrega");
             break;
         case "4":
             changeHeaderColor("bg-primary bg-warning", "bg-danger");
-            toggleElements("#row_ot, #row_codebar, #content_tb_bidones", "#row_responsable, #row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot");
+            toggleElements("#row_ot, #row_codebar, #row_responsable_entrega, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot, #row_responsable");
             traerGrillaBidones("TODOS");
             break;
         default:
-            toggleElements("", "#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones");
+            toggleElements("", "#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones, , #row_responsable_entrega");
             break;
     }
 }
@@ -294,12 +349,28 @@ function crearResponsableBidones() {
         $("#responsable_por").hide();
         $("#responsable_por").removeAttr("required");
     }
+
+    if ($("#resp_entrega").val() === "OTROS") {
+        $("#responsable_por").show();
+        $("#responsable_por").val("");
+        $("#responsable_por").attr("required");
+        clearTable(); // Limpia el contenido del DataTable
+        $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
+    } else if ($("#resp_entrega").val() === "") {
+        $("#responsable_por").hide();
+        $("#responsable_por").removeAttr("required");
+        clearTable(); // Limpia el contenido del DataTable
+        $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
+    } else {
+        $("#responsable_por").hide();
+        $("#responsable_por").removeAttr("required");
+    }
 }
 
 /*esta funcion genera dinamicamente una grilla en el caso que el responsable tenga bidones en estado P de pendiente*/
 function traerGrillaBidones(responsable) {
     let tipo = $("#tipo_mov").val(); // Capturamos el valor de tipo_mov
-    let estado;
+    let estado = "";
     if (tipo == 1) {
         estado = "P";
     } else if (tipo == 2) {
@@ -345,7 +416,6 @@ function traerGrillaBidones(responsable) {
                 // Ahora ordena los datos en la columna 1 (mov_id) de mayor a menor
                 tablaBidones.order([1, 'desc']).draw(); // 'desc' para ordenar de mayor a menor en la columna mov_id
             } else if (estado == "E") {
-                initDataTableControlBidones();
                 bidones.forEach(fila => {
                     let newRow = tablaBidones.row.add([
                         index,
@@ -358,16 +428,15 @@ function traerGrillaBidones(responsable) {
                         fila.responsable,
                         fila.fechaDevolucion,
                         fila.cantidadEntregada,
-                            `<input type="number" id="cant${fila.mov_id}" class="form-control editable" value="${fila.cantidadRecibida}" style="display:none;" onblur="cantidadRestante(${fila.mov_id}, this.value)"/>`, // Celda editable para cantidadRecibida
+                        `<input type="number" id="cant${fila.mov_id}" class="form-control editable" value="${fila.cantidadRecibida}" style="display:none;" onblur="cantidadRestante(${fila.mov_id}, this)" onkeypress="cantidadRestante(${fila.mov_id}, this)"/>`, // Celda editable para cantidadRecibida
                         `<input type="checkbox" class="chk-mov-id" value="${fila.mov_id}" onchange="mostrarOcultarCeldabidon(${fila.mov_id})"/>` // Checkbox para identificar el mov_id
                     ]).draw().node(); // Obtén el nodo del `tr` recién creado
 
                     $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
 
                     index++;
-                    // Ahora ordenamos los datos en la columna 0 mov_id de mayor a menor 
-                    tablaBidones.order([0, 'desc']).draw();
                 });
+                tablaBidones.order([1, 'desc']).draw(); // 'desc' para ordenar de mayor a menor en la columna mov_id
             } else {
                 bidones.forEach(fila => {
                     let newRow = tablaBidones.row.add([
@@ -388,9 +457,8 @@ function traerGrillaBidones(responsable) {
                     $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
 
                     index++;
-                    // Ahora ordenamos los datos en la columna 0 mov_id de mayor a menor 
-                    tablaBidones.order([0, 'desc']).draw();
                 });
+                tablaBidones.order([1, 'desc']).draw(); // 'desc' para ordenar de mayor a menor en la columna mov_id
 
             }
             // Restablecer valores de los campos del formulario
@@ -533,34 +601,37 @@ function traerGrillaBidonesV2(responsable) {
 
 
 function initDataTableControlBidones() {
-    tablaInformeBidones = $("#tabla-bidones").DataTable({
-        "destroy": true,
-        dom: "Bfrtip",
-        "language":
+    if (!$.fn.DataTable.isDataTable("#tabla-bidones")) {
+        tablaBidones = $("#tabla-bidones").DataTable({
+            "destroy": true,
+            dom: "Bfrtip",
+            "language": {
+                sSearch: "Buscar:",
+                sLengthMenu: "Mostrar _MENU_ registros",
+                sZeroRecords: "No se encontraron resultados",
+                sEmptyTable: "Ningún dato disponible en esta tabla",
+                sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                sInfoThousands: ",",
+                sLoadingRecords: "Cargando...",
+                oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"}
+            },
+            buttons: [
                 {
-                    sSearch: "Buscar:",
-                    sLengthMenu: "Mostrar _MENU_ registros",
-                    sZeroRecords: "No se encontraron resultados",
-                    sEmptyTable: "Ning&uacute;n dato disponible en esta tabla",
-                    sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                    sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
-                    sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
-                    sInfoThousands: ",",
-                    sLoadingRecords: "Cargando...",
-                    oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"},
-                    buttons: {copyTitle: "DATOS COPIADOS", copySuccess: {_: "%d FILAS COPIADAS"}}
-                },
-        buttons: [
-            {
-                extend: 'colvis',
-                text: 'MOSTRAR / OCULTAR',
-                exportOptions: {
-                    columns: ':visible'
+                    extend: 'colvis',
+                    text: 'MOSTRAR / OCULTAR',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
                 }
-            }
-        ],
-        keys: {clipboard: !1}
-    });
+            ],
+            keys: {clipboard: !1},
+            // Configuración de paginación y buscador activada
+            "paging": true,
+            "searching": true
+        });
+    }
 }
 
 /* Captura los eventos al oprimir Enter o escanear con el lector */
@@ -681,7 +752,7 @@ function deshacerCargaBidon(mov_id) {
     });
 }
 
-function confirmarMovBidon() {
+function confirmarMovBidonV1() {
     let responsable = $("#responsable").val();
     let estado = $("#tipo_mov").find(':selected').attr('estado');
     let tipo = $("#tipo_mov").find(':selected').attr('name');
@@ -759,6 +830,96 @@ function confirmarMovBidon() {
     }
 }
 
+function confirmarMovBidon() {
+    let responsable = $("#responsable").val();
+    let resp_entrega = $("#resp_entrega").val();
+    let resp_entrega_name = $("#resp_entrega").find(':selected').attr('name');
+    let estado = $("#tipo_mov").find(':selected').attr('estado');
+    let tipo = $("#tipo_mov").find(':selected').attr('name');
+    let ids = [];
+    let data_ajax = {};
+    let link = "";
+
+    // Verificar si se seleccionó responsable para el estado "D"
+    if (resp_entrega === "" && estado === "D") {
+        toastr.warning("Debe seleccionar responsable a entregar bidones", "Advertencia");
+        return;
+    }
+
+    // Recorrer las filas de la tabla y obtener los mov_id
+    tablaBidones.rows().every(function () {
+        let $row = $(this.node());
+        let checkbox = $row.find('input[type="checkbox"]');
+        let data = this.data();
+
+        // Si es estado "E" o si el checkbox está marcado (para "R" y "D")
+        if (estado === "E" || (estado !== "E" && checkbox.is(':checked'))) {
+            ids.push(data[1]);  // posición mov_id
+        }
+    });
+
+    if (estado === "E") {
+        data_ajax = {
+            ids_regmov: ids.join(','),
+            tipoReg: estado
+        };
+        link = "cruds/control_bidones_itkv/crud_cambiar_estado_bidon.jsp";
+    } else if (estado === "R" || estado === "D") {
+        data_ajax = {
+            ids_regmov: ids.join(','),
+            tipoReg: estado,
+            res_id: estado === "D" ? resp_entrega : undefined,
+            res_name: estado === "D" ? resp_entrega_name : undefined
+        };
+        link = estado === "R" ? "cruds/control_bidones_itkv/crud_cambiar_estado_bidon.jsp" : "cruds/control_bidones_itkv/crud_cambiar_estado_bid_des.jsp";
+    }
+
+    if (ids.length > 0) {
+        Swal.fire({
+            title: 'FORMULA ',
+            text: "DESEA REGISTRAR MOVIMIENTO A " + tipo + "?",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'SI!',
+            cancelButtonText: 'NO!'
+        }).then((result) => {
+            if (result.value) {
+                $.ajax({
+                    type: 'post',
+                    url: link,
+                    data: data_ajax,
+                    success: function (res) {
+                        if (res.tipo === 1) {
+                            if (estado === "E") {
+                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa mod: E");
+                                clearTable();
+                                $("#btnConfirBidon").prop("disabled", true);
+                                resetForm();
+                            } else {
+                                traerGrillaBidones(estado === "R" ? responsable : "TODOS");
+                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa mod: " + estado);
+                            }
+                            if (tablaBidones.rows().count() === 0) {
+                                $("#btnConfirBidon").prop("disabled", true);
+                            }
+                        } else {
+                            toastr.error(res.mensaje, "Error en la actualizaci&oacute;n");
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        toastr.error("Error en la solicitud: " + textStatus, "Error");
+                    }
+                });
+            }
+        });
+    } else {
+        toastr.warning("No hay movimientos para actualizar", "Advertencia");
+    }
+}
+
+
 // Función para manejar el escaneo o ingreso manual del código de barras
 function escanCodBarReasig(mov_id, inputElement) {
     const $inputElement = $(inputElement); // Convertir a jQuery object
@@ -794,7 +955,7 @@ function reasignarCodBar(mov_id, cod_bar) {  // Añadimos $inputElement como par
                 aviso_generico(res.tipo, res.mensaje);
 
                 // Si la respuesta es exitosa (tipo == 1), hacer focus en el input para seguir escaneando
-                $("#cod_barra").focus();
+//                $("#cod_barra").focus();
             } else {
                 console.log('Error al reasignar el código de barras: ', res.mensaje);
             }
@@ -806,27 +967,54 @@ function reasignarCodBar(mov_id, cod_bar) {  // Añadimos $inputElement como par
 }
 
 
-/*función que agrega un nuevo nuevo código de barras al bidon asignado por mov_id*/
-function cantidadRestante(mov_id, cant) {
-        $.ajax({
-            type: "post",
-            url: "cruds/control_bidones_itkv/crud_carga_cant_rest.jsp",
-            data: {
-                mov_id: mov_id,
-            cant: cant
-            },
-            beforeSend: function () {
+// Función para manejar el ingreso manual o escaneo de la cantidad restante
+function cantidadRestante(mov_id, inputElement) {
+    const $inputElement = $(inputElement); // Convertir a jQuery object
+    const cant_actual = $inputElement.val().trim();
+    const cant_anterior = $inputElement.data('original-value') || '';
 
-            },
-            success: function (res) {
-                if (res.tipo == 1) {
-                    aviso_generico(res.tipo, res.mensaje);
-                } else {
-                    aviso_generico(res.tipo, res.mensaje);
-                }
-            }
-        });
+    // Validamos que no sea una cantidad vacía o nula, y que haya habido un cambio
+    if ((event.keyCode === 13 || event.which === 13 || event.type === "blur") && cant_actual !== "" && cant_actual !== cant_anterior) {
+        // Guardamos el valor previo en un atributo para futuras validaciones
+        $inputElement.data('original-value', cant_actual);
+
+        // Llamamos a la función para procesar la cantidad restante
+        actualizarCantidad(mov_id, cant_actual, $inputElement); // Pasamos el inputElement
+    } else if (cant_actual === "") {
+        console.log('La cantidad está vacía. No se enviarán datos.');
     }
+}
+
+// Función que realiza la petición AJAX para actualizar la cantidad restante
+function actualizarCantidad(mov_id, cant, inputElement) {
+    $.ajax({
+        type: "post",
+        url: "cruds/control_bidones_itkv/crud_carga_cant_rest.jsp",
+        data: {
+            mov_id: mov_id,
+            cant: cant
+        },
+        beforeSend: function () {
+            // Opcional: Mostrar indicador de carga si es necesario
+        },
+        success: function (res) {
+            if (res.tipo == 1) {
+                toastr.success(res.mensaje, "Mensaje de &eacute;xito: ");
+
+                // Si la respuesta es exitosa (tipo == 1), hacer focus en el input para seguir ingresando cantidades
+//                $(inputElement).focus();
+            } else {
+                toastr.error('Error al actualizar la cantidad restante: ' + res.mensaje, "Error: ");
+                $(inputElement).val('');
+
+            }
+        },
+        error: function (err) {
+            console.log('Error en la petici&oacute;n AJAX: ', err);
+        }
+    });
+}
+
 
 /************************************************************************INFORME BIDONES*********************************************************************************/
 /*contenedor informe movimiento bidones*/
