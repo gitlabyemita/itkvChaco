@@ -71,7 +71,7 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label for="responsable">Responsable</label>
-                            <select id="responsable" name="responsable" class="form-control selectpicker form-control-sm" data-live-search="true" onchange="traerGrillaBidones(this.value)">
+                            <select id="responsable" name="responsable" class="form-control selectpicker form-control-sm" data-live-search="true" onchange="manejoResponablesBidones(this.value)">
                                 <option value="">Seleccione responsable</option>                                                              
                                 <%while (rsRes.next()) {%>
                                 <option value="<%=rsRes.getString("id")%>" name="<%=rsRes.getString("nombre")%>"><%=rsRes.getString("nombre")%></option>                              
@@ -79,7 +79,7 @@
                                 <option>OTROS</option>
                             </select>
                             <br>
-                            <input type="text" class="form-control " placeholder="Ingrese nombre del nuevo responsable" value="" required   id="responsable_por" style="display: none">
+                            <input type="text" class="form-control " placeholder="Ingrese nombre del nuevo responsable" value="" required   id="responsable_por" style="display: none" onkeypress="return crearNuevoResponsableItkv(this.value)">
                         </div>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label for="resp_entrega">Responsable a entregar</label>
-                            <select id="resp_entrega" name="resp_entrega" class="form-control selectpicker form-control-sm" data-live-search="true">
+                            <select id="resp_entrega" name="resp_entrega" class="form-control selectpicker form-control-sm" data-live-search="true" onchange="manejoResponablesReciclaje()">
                                 <option value="">Seleccione responsable a entregar</option>                                                              
                                 <%while (rsResE.next()) {%>
                                 <option value="<%=rsResE.getString("id")%>" name="<%=rsResE.getString("nombre")%>"><%=rsResE.getString("nombre")%></option>                              
@@ -95,7 +95,7 @@
                                 <option>OTROS</option>
                             </select>
                             <br>
-                            <input type="text" class="form-control " placeholder="Ingrese nombre del nuevo responsable" value="" required   id="responsable_por" style="display: none">
+                            <input type="text" class="form-control " placeholder="Ingrese nombre del nuevo responsable" value="" required   id="responsable_por_entrega" style="display: none" onkeypress="return crearNuevoResponsableItkv(this.value)">
                         </div>
                     </div>
                 </div>
@@ -119,11 +119,21 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label for="articulo">Artículo</label>
-                            <select id="articulo" name="articulo" data-live-search="true" class="form-control form-control-sm selectpicker" onchange="traerSelectPresentacion(this.value)">   
+                            <select id="articulo" name="articulo" data-live-search="true" class="form-control form-control-sm selectpicker" onchange="handleArticuloChange(this)">   
                                 <option value="">Seleccione artículo</option>                              
                                 <%while (rsArt.next()) {%>
-                                <option value="<%=rsArt.getString("ItemCode")%>" name="<%=rsArt.getString("ItemName")%>"><%=rsArt.getString("ItemName")%></option>                              
+                                <option value="<%=rsArt.getString("ItemCode")%>" name="<%=rsArt.getString("ItemName")%>" pres_unica="<%=rsArt.getString("U_pres_unica")%>" lote_content="<%=rsArt.getString("ManBtchNum")%>" factor_multip="<%=rsArt.getString("NumInCnt")%>" name_factor_multip="<%=rsArt.getString("CntUnitMsr")%>"><%=rsArt.getString("ItemCode")%> - <%=rsArt.getString("ItemName")%></option>             
                                 <%}%>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="row_lote" style="display: none">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="lote">Lote</label>
+                            <select id="lote" name="lote" data-live-search="true" class="form-control form-control-sm selectpicker">   
+                                <option value="">Seleccione previamente un artículo</option>
                             </select>
                         </div>
                     </div>
@@ -132,7 +142,7 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label for="pres">Presentación</label>
-                            <select id="pres" name="pres" data-live-search="true" class="form-control form-control-sm selectpicker">          
+                            <select id="pres" name="pres" class="form-control form-control-sm selectpicker">          
                                 <option value="">Seleccione previamente un artículo</option>
                             </select>
                         </div>
@@ -149,6 +159,14 @@
                         <div class="form-group">
                             <!--<label for="bidon">Bidones</label>-->
                             <input type="hidden" name="bidon" id="bidon" class="form-control form-control-sm text-center">
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="row_cant_unit" style="display: none">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="cant_unit">Cantidad unitaria</label>
+                            <input type="number" id="cant_unit" name="cant_unit" class="form-control form-control-sm" placeholder="Ingresar cantidad unitaria">
                         </div>
                     </div>
                 </div>

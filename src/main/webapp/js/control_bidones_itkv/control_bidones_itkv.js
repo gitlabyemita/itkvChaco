@@ -52,46 +52,46 @@ function irControlMovimientosBidones() {
 
             cargar_estilo_calendario_global("dd/mm/yyyy");
 
-            // Evento para manejar las celdas editables
-//            tablaBidones.on('draw.dt', function () {
-//                // Activar celdas contenteditable y manejo de eventos
-//                $('.editable').on('focus', function () {
-//                    $(this).data('orig', $(this).val()); // Guarda el valor original
-//                });
-//
-//                $('.editable').on('blur', function () {
-//                    let nuevoValor = $(this).val();
-//                    let id = $(this).closest('tr').find('td:first').text(); // Obten el ID del mov_id
-//                    let campo = $(this).data('campo');
-//
-//                    if (nuevoValor != $(this).data('orig')) {
-//                        $.ajax({
-//                            url: "/ruta/de/actualizacion", // Cambia a la ruta de actualización de tu backend
-//                            type: 'POST',
-//                            data: {
-//                                'mov_id': id,
-//                                'campo': campo,
-//                                'valor': nuevoValor
-//                            },
-//                            success: function (response) {
-//                                // Manejar el éxito de la actualización
-//                                console.log("Valor actualizado con éxito.");
-//                            },
-//                            error: function () {
-//                                // Manejar el error
-//                                console.log("Error en la actualización.");
-//                            }
-//                        });
-//                    }
-//                });
-//            });
+            traerSelectArticulo();
+        }
+    });
+}
+
+function traerSelectArticulo() {
+    $.ajax({
+        type: "post",
+        url: "consultas/control_bidones_itkv/consulta_select_articulos.jsp",
+        success: function (res) {
+            $("#articulo").html(''); // Limpiar el select
+
+            // Verificamos si hay una lista de articulos
+            if (res.articulos && res.articulos.length > 0) {
+                let newOption = ""; // Inicializamos correctamente como cadena vacía
+
+                // Iteramos sobre las opciones recibidas y las agregamos al select
+                res.articulos.forEach(lote => {
+                    if (isEmpty(lote.pres_unica) && isEmpty(lote.lote_content)) {
+                        newOption += `<option disabled value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name}</option>`;
+                    } else {
+                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name}</option>`;
+                    }
+                });
+                $("#articulo").html("<option value=''>Seleccione art&iacute;culo</option>" + newOption);
+                $("#articulo").selectpicker('refresh');
+            } else {
+                $("#articulo").html("<option value=''>No hay art&iacute;culos disponibles</option>");
+                $("#articulo").selectpicker('refresh');
+            }
+        },
+        error: function (err) {
+            console.error("Error al obtener los lotes: ", err);
         }
     });
 }
 
 function resetForm() {
-    $("#ot, #dev_estimada, #cant, #bidon, #cod_barra").val('');
-    $("#articulo, #pres, #responsable").val('').selectpicker('refresh');
+    $("#ot, #dev_estimada, #cant, #bidon, #cod_barra, #cant_unit").val('');
+    $("#articulo, #pres, #responsable, #lote").val('').selectpicker('refresh');
     $("#btnConfirBidon").prop("disabled", true);
 }
 
@@ -100,7 +100,70 @@ function clearTable() {
 }
 
 function isEmpty(...fields) {
-    return fields.some(field => field === "");
+    return fields.some(field => field === "" || field === null || field === undefined);
+}
+
+function handleArticuloChange(element) {
+    let pres_unica = $(element).find(':selected').attr('pres_unica');
+    let lote_content = $(element).find(':selected').attr('lote_content');
+    let cod_art = $(element).val(); // Obtener el código del artículo
+
+    // Validar que pres_unica y lote_content no estén vacíos
+    if (isEmpty(pres_unica) && isEmpty(lote_content)) {
+        toastr.warning("El art&iacute;culo seleccionado no posee presentaci&oacute;n &uacute;nica ni lote asociado, favor verificar", "Advertencia:");
+        return;
+    }
+
+    // Si la validación pasa, ejecutamos las funciones necesarias
+    traerSelectPresentacion(cod_art);
+    traerLoteArticulo(cod_art);
+    optionArticulo(element); // Pasamos el elemento como parámetro a esta función
+}
+
+
+/* Mostrar/ocultar opciones de acuerdo al artículo seleccionado */
+function optionArticulo(element) {
+    let pres_unica = $(element).find(':selected').attr('pres_unica');
+    let lote_content = $(element).find(':selected').attr('lote_content');
+
+    if (isEmpty(pres_unica) && isEmpty(lote_content)) {
+        toastr.warning("El art&iacute;culo seleccionado no posee presentaci&oacute;n &uacute;nica ni lote asociado, favor verificar", "Advertencia: ");
+        return;
+    }
+
+    // Mostrar/Ocultar elementos según tipo
+    function toggleParameters(showSelector, hideSelector) {
+        $(showSelector).show();
+        $(hideSelector).hide();
+    }
+
+    // Crear una combinación de valores para evaluar en el switch
+    let combination = pres_unica + "_" + lote_content;
+
+    // Evaluar la combinación de pres_unica y lote_content
+    switch (combination) {
+        case "1_Y":
+            toggleParameters("#row_lote", "#row_cant_unit");
+            break;
+        case "1_N":
+            toggleParameters("", "#row_cant_unit, #row_lote");
+            break;
+        case "0_Y":
+            toggleParameters("#row_lote, #row_cant_unit", "");
+            break;
+        case "null_Y":
+            toggleParameters("#row_lote, #row_cant_unit", "");
+            break;
+        case "0_N":
+            toggleParameters("#row_cant_unit", "#row_lote");
+            break;
+        case "null_N":
+            toggleParameters("#row_cant_unit", "#row_lote");
+            break;
+        default:
+            toggleParameters("", "#row_cant_unit, #row_lote");
+            break;
+    }
 }
 
 function traerSelectPresentacion(cod_art) {
@@ -120,7 +183,7 @@ function traerSelectPresentacion(cod_art) {
 
                     // Iteramos sobre las opciones recibidas y las agregamos al select
                     res.presentacion.forEach(option => {
-                        newOption += `<option value="${option.pre_id}" cantidad="${option.pre_cantidad}" name="${option.pre_name}">${option.pre_name}</option>`;
+                        newOption += `<option value="${option.pre_id}" u_medida="${option.pre_und}" cantidad="${option.pre_cantidad}" name="${option.pre_name}">${option.pre_name} - ${option.pre_cantidad} ${option.pre_und}</option>`;
                     });
 
                     // Insertamos las nuevas opciones en el select
@@ -142,26 +205,107 @@ function traerSelectPresentacion(cod_art) {
     }
 }
 
+function traerLoteArticulo(cod_art) {
+    let name_art = $("#articulo").find(':selected').attr('name');
+    if (cod_art !== "") {
+        $.ajax({
+            type: "post",
+            url: "consultas/control_bidones_itkv/consulta_select_lote.jsp",
+            data: {cod_art: cod_art},
+            dataType: "json", // Aseguramos que la respuesta se trate como JSON
+            success: function (res) {
+                $("#lote").html(''); // Limpiar el select
+
+                // Verificamos si hay una lista de presentaciones
+                if (res.lotes && res.lotes.length > 0) {
+                    let newOption = ""; // Inicializamos correctamente como cadena vacía
+
+                    // Iteramos sobre las opciones recibidas y las agregamos al select
+                    res.lotes.forEach(option => {
+                        newOption += `<option value="${option.lote_id}" cantidad="${option.cantidad_lote}" name="${option.lote_name}">${option.lote_name}</option>`;
+                    });
+
+                    // Insertamos las nuevas opciones en el select
+                    $("#lote").html("<option value=''>Seleccione lote para el art&iacute;culo " + name_art + "</option>" + newOption);
+                    $("#lote").selectpicker('refresh');
+                } else {
+                    $("#lote").html("<option value=''>No hay lotes disponibles para el art&iacute;culo " + name_art + "</option>");
+                    $("#lote").selectpicker('refresh');
+                }
+            },
+            error: function (err) {
+                console.error("Error al obtener los lotes: ", err);
+            }
+        });
+    } else {
+        $("#lote").html(''); // Limpiar el select
+        $("#lote").html("<option value=''>Seleccione previamente un art&iacute;culo</option>");
+        $("#lote").selectpicker('refresh');
+    }
+}
 
 /*con esta funcion ejecutamos el crud para luego agregar una nueva fila en la grilla*/
 function agregarBidonGrilla() {
-    const tipo = $("#tipo_mov").val(),
+    let tipo = $("#tipo_mov").val(),
             id_resp = $("#responsable").val(),
             resp = $("#responsable").find(':selected').attr('name'),
             ot = $("#ot").val(),
             f_dev = $("#dev_estimada").val(),
+            fechaActual = new Date(),
             cod_art = $("#articulo").val(),
             name_art = $("#articulo").find(':selected').attr('name'),
             pres = $("#pres").val(),
-            cantidad = $("#pres").find(':selected').attr('cantidad'),
+            cantidad = "",
             name_pres = $("#pres").find(':selected').attr('name'),
+            pres_unica = $("#articulo").find(':selected').attr('pres_unica'),
+            lote_content = $("#articulo").find(':selected').attr('lote_content'),
             cod_barra = $("#cod_barra").val(),
-            estado = $("#tipo_mov").find(':selected').attr('estado');
+            lote = $("#lote").find(':selected').attr('name');
 
+    // Separar el valor de la fecha (dd/mm/aaaa) en día, mes y año
+    let partesFecha = f_dev.split("/");
+
+    // Convertir la fecha al formato aaaa-mm-dd para crear un objeto Date en JS
+    let fechaDev = new Date(partesFecha[2], partesFecha[1] - 1, partesFecha[0]); // Año, Mes (indexado desde 0), Día
+
+    // Validar que la fecha ingresada no sea menor a la fecha actual (solo comparamos fechas, ignoramos las horas)
+    if (fechaDev.setHours(0, 0, 0, 0) < fechaActual.setHours(0, 0, 0, 0)) {
+        toastr.error("La fecha ingresada no puede ser menor a la fecha actual", "Error: ");
+        $("#dev_estimada").val(""); // Limpiar el campo si la fecha no es válida
+        return;
+    } else {
+        console.log("Fecha v&aacute;lida: ", f_dev);
+    }
+    if (pres_unica == 1) {
+        cantidad = $("#pres").find(':selected').attr('cantidad');
+        if (isEmpty(lote) && lote_content === "Y") {
+            toastr.error("Debe seleccionar un lote para el art&iacute;culo " + name_art, "Error");
+            return;
+        }
+    } else {
+        let cant_unitaria = parseFloat($("#cant_unit").val());
+        let cant_val = $("#cant_unit").val();
+        let cant_stock = parseFloat($("#lote").find(':selected').attr('cantidad')) || 0; // Convertir a número, si es NaN, usar 0
+        let u_medida = $("#pres").find(':selected').attr('u_medida');
+
+        if (isEmpty(lote, cant_val)) {
+            toastr.error("Debe completar todos los campos para insertar el art&iacute;culo " + name_art, "Error");
+            return;
+        }
+        // Comparar los números correctamente
+        if (cant_unitaria > cant_stock) {
+            toastr.warning("El stock disponible es de: " + cant_stock + " " + u_medida, "Advertencia:");
+            toastr.error("La cantidad ingresada es mayor al stock disponible", "Error:");
+            $("#cod_barra").val(""); // Limpiar el input de código de barra
+            return;
+        } else {
+            cantidad = cant_unitaria; // Guardar la cantidad unitaria válida
+        }
+    }
     const table = $("#tabla-bidones").DataTable();
     var codBarExists = table.column(2).data().toArray().includes(cod_barra);
-    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art)) {
-        toastr.error("Los campos deben estar completos, s&oacute;lo la OT es opcional.", "Error");
+    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art, ot)) {
+        toastr.error("Todos los campos deben estar completos", "Error");
         return;
     } else if (codBarExists) {
         toastr.error("El c&oacute;digo de barra ya existe", "Error");
@@ -182,6 +326,7 @@ function agregarBidonGrilla() {
                 pres: pres,
                 cantidad: cantidad,
                 cod_barra: cod_barra,
+                lote: lote,
                 estado: "P"
             },
             beforeSend: function () {
@@ -315,55 +460,36 @@ function optionTipoMov(tipo) {
     switch (tipo) {
         case "1":
             changeHeaderColor("bg-warning bg-danger", "bg-primary");
-            toggleElements("#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones", "#row_responsable_entrega");
+            toggleElements("#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones", "#row_responsable_entrega, #row_lote, #row_cant_unit");
             break;
         case "2":
             changeHeaderColor("bg-primary bg-danger", "bg-warning");
-            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot,#row_responsable_entrega");
+            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot,#row_responsable_entrega, #row_lote, #row_cant_unit");
             break;
         case "4":
             changeHeaderColor("bg-primary bg-warning", "bg-danger");
-            toggleElements("#row_ot, #row_codebar, #row_responsable_entrega, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot, #row_responsable");
+            toggleElements("#row_ot, #row_codebar, #row_responsable_entrega, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot, #row_responsable, #row_lote, #row_cant_unit");
             traerGrillaBidones("TODOS");
             break;
         default:
-            toggleElements("", "#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones, , #row_responsable_entrega");
+            toggleElements("", "#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones, #row_responsable_entrega, #row_lote, #row_cant_unit");
             break;
     }
 }
-;
 
-function crearResponsableBidones() {
+function manejoResponablesBidones(responsable) {
     if ($("#responsable").val() === "OTROS") {
         $("#responsable_por").show();
         $("#responsable_por").val("");
-        $("#responsable_por").attr("required");
         clearTable(); // Limpia el contenido del DataTable
         $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
     } else if ($("#responsable").val() === "") {
         $("#responsable_por").hide();
-        $("#responsable_por").removeAttr("required");
         clearTable(); // Limpia el contenido del DataTable
         $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
     } else {
         $("#responsable_por").hide();
-        $("#responsable_por").removeAttr("required");
-    }
-
-    if ($("#resp_entrega").val() === "OTROS") {
-        $("#responsable_por").show();
-        $("#responsable_por").val("");
-        $("#responsable_por").attr("required");
-        clearTable(); // Limpia el contenido del DataTable
-        $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
-    } else if ($("#resp_entrega").val() === "") {
-        $("#responsable_por").hide();
-        $("#responsable_por").removeAttr("required");
-        clearTable(); // Limpia el contenido del DataTable
-        $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
-    } else {
-        $("#responsable_por").hide();
-        $("#responsable_por").removeAttr("required");
+        traerGrillaBidones(responsable);
     }
 }
 
@@ -462,13 +588,8 @@ function traerGrillaBidones(responsable) {
 
             }
             // Restablecer valores de los campos del formulario
-            $("#ot").val('');
-            $("#dev_estimada").val('');
-            $("#articulo").val('').selectpicker('refresh');
-            $("#pres").val('').selectpicker('refresh');
-            $("#cod_barra").val('');
-            $("#ot, #dev_estimada, #cant, #bidon, #cod_barra").val('');
-            $("#articulo, #pres").val('').selectpicker('refresh');
+            $("#ot, #dev_estimada, #cant, #bidon, #cod_barra, #cant_unit").val('');
+            $("#articulo, #pres, #lote").val('').selectpicker('refresh');
 
             // Habilitar o deshabilitar el botón dependiendo de si hay bidones en la tabla
             if (bidones.length > 0) {
@@ -596,42 +717,6 @@ function traerGrillaBidonesV2(responsable) {
             tablaBidones.order([0, 'desc']).draw(false); // Ordenar de mayor a menor la columna índice
         }
     });
-}
-
-
-
-function initDataTableControlBidones() {
-    if (!$.fn.DataTable.isDataTable("#tabla-bidones")) {
-        tablaBidones = $("#tabla-bidones").DataTable({
-            "destroy": true,
-            dom: "Bfrtip",
-            "language": {
-                sSearch: "Buscar:",
-                sLengthMenu: "Mostrar _MENU_ registros",
-                sZeroRecords: "No se encontraron resultados",
-                sEmptyTable: "Ningún dato disponible en esta tabla",
-                sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
-                sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
-                sInfoThousands: ",",
-                sLoadingRecords: "Cargando...",
-                oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"}
-            },
-            buttons: [
-                {
-                    extend: 'colvis',
-                    text: 'MOSTRAR / OCULTAR',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                }
-            ],
-            keys: {clipboard: !1},
-            // Configuración de paginación y buscador activada
-            "paging": true,
-            "searching": true
-        });
-    }
 }
 
 /* Captura los eventos al oprimir Enter o escanear con el lector */
@@ -1011,6 +1096,92 @@ function actualizarCantidad(mov_id, cant, inputElement) {
         },
         error: function (err) {
             console.log('Error en la petici&oacute;n AJAX: ', err);
+        }
+    });
+}
+
+function manejoResponablesReciclaje() {
+    if ($("#resp_entrega").val() === "OTROS") {
+        $("#responsable_por_entrega").show();
+        $("#responsable_por_entrega").val("");
+        clearTable(); // Limpia el contenido del DataTable
+        $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
+    } else if ($("#resp_entrega").val() === "") {
+        $("#resp_entrega").hide();
+        clearTable(); // Limpia el contenido del DataTable
+        $("#btnConfirBidon").prop("disabled", true); // Deshabilitar el botón
+    } else {
+        $("#resp_entrega").hide();
+    }
+}
+
+// Función para manejar el ingreso manual o escaneo de la cantidad restante
+function crearNuevoResponsableItkv(nombre) {
+    if (event.keyCode === 13 || event.which === 13) {
+        crudNuevoResponsableItkv(nombre);
+    }
+}
+
+// Función que realiza la petición AJAX para insertar nuevo responsable
+function crudNuevoResponsableItkv(nombre) {
+    $.ajax({
+        type: "post",
+        url: "cruds/control_bidones_itkv/crud_nuevo_responsable_itkv.jsp",
+        data: {
+            nombre: nombre
+        },
+        beforeSend: function () {
+            cargar_load("...Cargando");
+        },
+        success: function (res) {
+            cerrar_load();
+            if (res.tipo == 1) {
+                toastr.success(res.mensaje, "Mensaje de &eacute;xito: ");
+                traerSelectResponsable();
+                $("#responsable_por").val('');
+                $("#responsable_por").hide();
+                $("#responsable_por_entrega").val('');
+                $("#responsable_por_entrega").hide();
+            } else {
+                toastr.error('Error al actualizar la cantidad restante: ' + res.mensaje, "Error: ");
+            }
+        },
+        error: function (err) {
+            console.log('Error en la petici&oacute;n AJAX: ', err);
+        }
+    });
+}
+
+// funcion que llena el select responsable luego de insertar nuevo 
+function traerSelectResponsable() {
+    $.ajax({
+        type: "post",
+        url: "consultas/control_bidones_itkv/consulta_select_responsable_itkv.jsp",
+        success: function (res) {
+            $("#responsable").html(''); // Limpiar el select
+            $("#resp_entrega").html(''); // Limpiar el select
+
+            // Verificamos si hay una lista de articulos
+            if (res.responsables && res.responsables.length > 0) {
+                let newOption = ""; // Inicializamos correctamente como cadena vacía
+
+                // Iteramos sobre las opciones recibidas y las agregamos al select
+                res.responsables.forEach(responsable => {
+                        newOption += `<option value="${responsable.id}" name="${responsable.nombre}" >${responsable.nombre}</option>`;
+                });
+                $("#responsable").html("<option value=''>Seleccione responsable</option>" + newOption + "<option>OTROS</option>");
+                $("#responsable").selectpicker('refresh');
+                $("#resp_entrega").html("<option value=''>Seleccione responsable</option>" + newOption + "<option>OTROS</option>");
+                $("#resp_entrega").selectpicker('refresh');
+            } else {
+                $("#responsable").html("<option value=''>No hay responsables disponibles</option>");
+                $("#responsable").selectpicker('refresh');
+                $("#resp_entrega").html("<option value=''>No hay responsables disponibles</option>");
+                $("#resp_entrega").selectpicker('refresh');
+            }
+        },
+        error: function (err) {
+            console.error("Error al obtener los responsables: ", err);
         }
     });
 }

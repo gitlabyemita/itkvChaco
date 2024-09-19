@@ -15,7 +15,7 @@
         Statement   st      = connection.createStatement(); 
         ResultSet   rs; 
         String tr="";
-        rs = st.executeQuery(" select * from itkv_salida1 where TIPO_registro IN ('CONSUMO','TRANSFERENCIA') AND convert(date,fecha)='"+fecha+"' order by 1 desc  ");
+        rs = st.executeQuery(" select * from itkv_salida1 where TIPO_registro IN ('CONSUMO', 'CONSUMO ANDROID APP','TRANSFERENCIA') AND convert(date,fecha)='"+fecha+"' order by 1 desc  ");
         
          String   cabecera = " <table id='grilla' class=' table-bordered compact hover' style='width:100%'>"
                 + "<thead>"
