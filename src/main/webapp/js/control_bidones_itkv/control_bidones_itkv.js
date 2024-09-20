@@ -838,81 +838,81 @@ function deshacerCargaBidon(mov_id) {
 }
 
 function confirmarMovBidonV1() {
-    let responsable = $("#responsable").val();
-    let estado = $("#tipo_mov").find(':selected').attr('estado');
-    let tipo = $("#tipo_mov").find(':selected').attr('name');
-    let ids = [];
-
-    if (estado == "E") {
-        // Recorre cada fila de la tabla y obtiene los mov_id de la columna en posición 0
-        tablaBidones.rows().every(function () {
-            let data = this.data();
-            ids.push(data[1]);  // posición mov_id
-        });
-    } else if (estado == "R" || estado == "D") {
-        // Recorre cada fila de la tabla y verifica si el checkbox está marcado
-        tablaBidones.rows().every(function () {
-            let $row = $(this.node()); // Accedemos al nodo de la fila
-            let checkbox = $row.find('input[type="checkbox"]'); // Encontramos el checkbox en la columna 10
-
-            // Verifica si el checkbox está marcado
-            if (checkbox.is(':checked')) {
-                let data = this.data();
-                ids.push(data[1]);  // Agrega el mov_id (posición 0) al array si está marcado
-            }
-        });
-    }
-
-    if (ids.length > 0) {
-        Swal.fire({
-            title: 'FORMULA ',
-            text: "DESEA REGISTRAR MOVIMIENTO A " + tipo + "?",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'SI!',
-            cancelButtonText: 'NO!'
-        }).then((result) => {
-            if (result.value) {
-                $.ajax({
-                    type: 'post',
-                    url: 'cruds/control_bidones_itkv/crud_cambiar_estado_bidon.jsp',
-                    data: {
-                        ids_regmov: ids.join(','),
-                        tipoReg: estado  // Ejemplo: Tipo de registro, cámbialo según lo que necesites
-                    },
-                    success: function (res) {
-                        // Manejo de la respuesta
-                        if (res.tipo === 1) {
-                            if (estado == "E") {
-                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa");
-                                clearTable();
-                                $("#btnConfirBidon").prop("disabled", true); // deshabilitar el botón
-                                resetForm();
-                            } else if (estado == "R" || estado == "D") {
-                                traerGrillaBidones(responsable);//recargamos la tabla luego de confirmar la operación
-                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa");
-                            }
-                            // Verificar si la tabla está vacía
-                            if (tablaBidones.rows().count() === 0) {
-                                $("#btnConfirBidon").prop("disabled", true); // Deshabilitar si la tabla está vacía
-                            }
-                        } else if (res.tipo === 0) {
-                            console.log(res.mensaje);
-                        } else {
-                            toastr.error(res.mensaje, "Error en la actualizaci&oacute;n");
-                        }
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        toastr.error("Error en la solicitud: " + textStatus, "Error");
-                    }
-                });
-            }
-        });
-    } else {
-        toastr.warning("No hay movimientos para actualizar", "Advertencia");
-    }
+//    let responsable = $("#responsable").val();
+//    let estado = $("#tipo_mov").find(':selected').attr('estado');
+//    let tipo = $("#tipo_mov").find(':selected').attr('name');
+//    let ids = [];
+//
+//    if (estado == "E") {
+//        // Recorre cada fila de la tabla y obtiene los mov_id de la columna en posición 0
+//        tablaBidones.rows().every(function () {
+//            let data = this.data();
+//            ids.push(data[1]);  // posición mov_id
+//        });
+//    } else if (estado == "R" || estado == "D") {
+//        // Recorre cada fila de la tabla y verifica si el checkbox está marcado
+//        tablaBidones.rows().every(function () {
+//            let $row = $(this.node()); // Accedemos al nodo de la fila
+//            let checkbox = $row.find('input[type="checkbox"]'); // Encontramos el checkbox en la columna 10
+//
+//            // Verifica si el checkbox está marcado
+//            if (checkbox.is(':checked')) {
+//                let data = this.data();
+//                ids.push(data[1]);  // Agrega el mov_id (posición 0) al array si está marcado
+//            }
+//        });
+//    }
+//
+//    if (ids.length > 0) {
+//        Swal.fire({
+//            title: 'FORMULA ',
+//            text: "DESEA REGISTRAR MOVIMIENTO A " + tipo + "?",
+//            type: 'warning',
+//            showCancelButton: true,
+//            confirmButtonColor: '#3085d6',
+//            cancelButtonColor: '#d33',
+//            confirmButtonText: 'SI!',
+//            cancelButtonText: 'NO!'
+//        }).then((result) => {
+//            if (result.value) {
+//                $.ajax({
+//                    type: 'post',
+//                    url: 'cruds/control_bidones_itkv/crud_cambiar_estado_bidon.jsp',
+//                    data: {
+//                        ids_regmov: ids.join(','),
+//                        tipoReg: estado  // Ejemplo: Tipo de registro, cámbialo según lo que necesites
+//                    },
+//                    success: function (res) {
+//                        // Manejo de la respuesta
+//                        if (res.tipo === 1) {
+//                            if (estado == "E") {
+//                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa");
+//                                clearTable();
+//                                $("#btnConfirBidon").prop("disabled", true); // deshabilitar el botón
+//                                resetForm();
+//                            } else if (estado == "R" || estado == "D") {
+//                                traerGrillaBidones(responsable);//recargamos la tabla luego de confirmar la operación
+//                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa");
+//                            }
+//                            // Verificar si la tabla está vacía
+//                            if (tablaBidones.rows().count() === 0) {
+//                                $("#btnConfirBidon").prop("disabled", true); // Deshabilitar si la tabla está vacía
+//                            }
+//                        } else if (res.tipo === 0) {
+//                            console.log(res.mensaje);
+//                        } else {
+//                            toastr.error(res.mensaje, "Error en la actualizaci&oacute;n");
+//                        }
+//                    },
+//                    error: function (jqXHR, textStatus, errorThrown) {
+//                        toastr.error("Error en la solicitud: " + textStatus, "Error");
+//                    }
+//                });
+//            }
+//        });
+//    } else {
+//        toastr.warning("No hay movimientos para actualizar", "Advertencia");
+//    }
 }
 
 function confirmarMovBidon() {
