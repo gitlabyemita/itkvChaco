@@ -70,10 +70,14 @@ function traerSelectArticulo() {
 
                 // Iteramos sobre las opciones recibidas y las agregamos al select
                 res.articulos.forEach(lote => {
+                    let lote_content = lote.lote_content;
                     if (isEmpty(lote.pres_unica) && isEmpty(lote.lote_content)) {
-                        newOption += `<option disabled value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name}</option>`;
-                    } else {
-                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name}</option>`;
+                        newOption += `<option disabled value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">Verificar datos - ${lote.art_id} - ${lote.art_name}</option>`;
+                        console.log(`lote id: "${lote.art_id}" nombre: "${lote.art_name}" pres_unica: "${lote.pres_unica}" lote_content: "${lote.lote_content}"`);
+                    } else if (lote_content === "Y") {
+                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name} - <span>TIENE LOTE</span></option>`;
+                    } else{
+                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name}</option>`;                        
                     }
                 });
                 $("#articulo").html("<option value=''>Seleccione art&iacute;culo</option>" + newOption);
@@ -222,7 +226,7 @@ function traerLoteArticulo(cod_art) {
 
                     // Iteramos sobre las opciones recibidas y las agregamos al select
                     res.lotes.forEach(option => {
-                        newOption += `<option value="${option.lote_id}" cantidad="${option.cantidad_lote}" name="${option.lote_name}">${option.lote_name}</option>`;
+                        newOption += `<option value="${option.lote_id}" cantidad="${option.cantidad_lote}" name="${option.lote_name}">Lote: ${option.lote_name} - Stock: ${option.cantidad_lote}</option>`;
                     });
 
                     // Insertamos las nuevas opciones en el select
@@ -1167,7 +1171,7 @@ function traerSelectResponsable() {
 
                 // Iteramos sobre las opciones recibidas y las agregamos al select
                 res.responsables.forEach(responsable => {
-                        newOption += `<option value="${responsable.id}" name="${responsable.nombre}" >${responsable.nombre}</option>`;
+                    newOption += `<option value="${responsable.id}" name="${responsable.nombre}" >${responsable.nombre}</option>`;
                 });
                 $("#responsable").html("<option value=''>Seleccione responsable</option>" + newOption + "<option>OTROS</option>");
                 $("#responsable").selectpicker('refresh');
