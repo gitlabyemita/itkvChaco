@@ -728,7 +728,7 @@ function ir_reporte_consumo_combustible_itkv()
             $("#contenedor_principal").html(data);
             cargar_estilo_calendario_global('dd/mm/yyyy', true);
 
-            ir_grilla_consumo_combustible_itkv()
+            ir_grilla_consumo_combustible_itkv();
             cerrar_load();
 
         },
@@ -753,16 +753,16 @@ function ir_grilla_consumo_combustible_itkv()
         {
             // $("#div_grilla").html("");
             $("#div_grilla").html(data.tabla);
-            $("#grilla").DataTable
-                    ({
-                        paging: false,
-                        "ordering": false,
-                        "language":
-                                {
-                                    "sUrl": "js/Spanish.txt"
-                                },
-                        scrollX: true,
-                    });
+//            $("#grilla").DataTable
+//                    ({
+//                        paging: false,
+//                        "ordering": false,
+//                        "language":
+//                                {
+//                                    "sUrl": "js/Spanish.txt"
+//                                },
+//                        scrollX: true
+//                    });
             cerrar_load();
 
         },

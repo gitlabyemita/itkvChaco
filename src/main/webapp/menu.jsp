@@ -66,11 +66,11 @@
 
         <link rel="stylesheet" href="plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
         <link href="plugins/font-awesome.min.css" rel="stylesheet" type="text/css"/>
-        <link href="css/CSSdataTableV2_1_5.css" rel="stylesheet" type="text/css"/>
+        <!--<link href="css/CSSdataTableV2_1_5.css" rel="stylesheet" type="text/css"/>-->
         <!--para notificaciones toastr-->
         <link href="css/toastr.min.css" rel="stylesheet" type="text/css"/>
         <link href="css/toastr.css" rel="stylesheet" type="text/css"/>
-
+        <link href="css/app.css" rel="stylesheet" type="text/css"/>
 
 
     </head>

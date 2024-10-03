@@ -1,5 +1,5 @@
 table.dataTable thead th, table.dataTable thead td, table.dataTable tfoot th, table.dataTable tfoot td {
-  background-color: white;
+  background-color: #001f3f;
 }
 table.dataTable tbody tr td {
   background-color: #ffffff;
