@@ -105,7 +105,7 @@
             <div class="card-body" id="card-body-mov">
                 <div class="row">
                     <div class="col-12 table-responsive" id="div-tb-informe-bidones">
-                        <table class="hover table table-xs compact w-100 table-striped table-bordered" id="tabla-informe-bidones">
+                        <table class="hover table table-xs compact w-100 table-striped table-bordered" id="tabla-informe-bidones" style="width: 100%">
                             <thead>
                                 <tr>
                                     <th class="text-center">#</th>

@@ -6,28 +6,30 @@
 <%@include  file="../../versiones.jsp" %>
 <%@include  file="../../chequearsesion.jsp" %>
 <%@include  file="../../cruds/conexion.jsp" %> 
- 
+
 <style>
-    tr:hover {color:#ffffff ; background-color: #001940;}
+    tr:hover {
+        color:#ffffff ;
+        background-color: #001940;
+    }
 </style>
 <head>   
 <label  ><b></b></label> 
 
 
 
-<%
-        Statement   st      = connection.createStatement(); 
-        ResultSet   rs; 
-        String tr="";
-        rs = st.executeQuery(" select convert(varchar,getdate(),103) as fecha  ");
-String fecha="";
+<%    Statement st = connection.createStatement();
+    ResultSet rs;
+    String tr = "";
+    rs = st.executeQuery(" select convert(varchar,getdate(),103) as fecha  ");
+    String fecha = "";
 
-while (rs.next()){
-    
-    fecha= rs.getString("fecha");
-}
+    while (rs.next()) {
 
-connection.close();
+        fecha = rs.getString("fecha");
+    }
+
+    connection.close();
 
 %>
 </head><!-- comment -->
@@ -42,28 +44,33 @@ connection.close();
     </div>
 </div> 
 
- 
 
-    <br>
-    <strong ><a>Fecha de registro</a></strong>
-     
-     
 
-     
-    <input type="text" class="datepicker " value="<%=fecha%>" required id="fecha">
-    <input  class="btn bg-navy"  type="button"  onclick="ir_grilla_consumo_combustible_itkv();" value="BUSCAR" >
+<br>
+<strong ><a>Fecha de registro</a></strong>
 
-    <div id="div_grilla">
-        
-        
-    </div><!-- comment -->
-    
-        <div id="div_grilla2">
-        
-        
+
+
+
+<input type="text" class="datepicker " value="<%=fecha%>" required id="fecha">
+<input  class="btn bg-navy"  type="button"  onclick="ir_grilla_consumo_combustible_itkv();" value="BUSCAR" >
+<br>
+<br>
+<div class="col-12">
+    <div class="card elevation-2">
+        <!--        <div class="card-header bg-primary">
+                    <h3 class="card-title">CONSUMO COMBUSTIBLE</h3>
+                </div>-->
+        <div id="div_grilla" class="card-body">
+        </div>
     </div>
-    
- 
+</div>
+
+
+<div id="div_grilla2">
+
+
+</div>
 
 
 
@@ -78,4 +85,6 @@ connection.close();
 
 
 
- 
+
+
+

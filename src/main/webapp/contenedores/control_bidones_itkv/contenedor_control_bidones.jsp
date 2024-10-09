@@ -202,18 +202,18 @@
                     <table class="hover table table-xs compact w-100 table-striped table-bordered" id="tabla-bidones">
                         <thead>
                             <tr>
+                                <th class="text-center" width="60">ACCIÓN</th>
                                 <th class="text-center" width="80">#</th>
                                 <th class="text-center" width="80">ID_MOV</th>
+                                <th class="text-center" width="60">CANT. RECIBIDA</th>
+                                <th class="text-center" width="60">CANT. ENTREGADA</th>
                                 <th class="text-center" width="80">COD_BARRA</th>
                                 <th class="text-center" width="80">COD_BARRA REASIG</th>
+                                <th class="text-center" width="60">F_DEVOLUCION</th>
                                 <th class="text-center" width="80">NOMBRE</th>
                                 <th class="text-center" width="80">PRESENTACION</th>
                                 <th class="text-center" width="60">O.T.</th>
                                 <th class="text-center" width="60">RESPONSABLE</th>
-                                <th class="text-center" width="60">F_DEVOLUCION</th>
-                                <th class="text-center" width="60">CANT. ENTREGADA</th>
-                                <th class="text-center" width="60">CANT. RECIBIDA</th>
-                                <th class="text-center" width="60">ACCIÓN</th>
                             </tr>
                         </thead>
                         <tbody class="text-center">
