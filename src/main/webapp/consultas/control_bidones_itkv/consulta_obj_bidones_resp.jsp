@@ -20,7 +20,17 @@
         if (res_id.equals("TODOS") && estado.equals("R")) {
             query = "select * from cmb_registro_movimientos rm  left outer join cmb_presentacion pr on rm.rmov_pre_id = pr.pre_id where rm.rmov_estado = '" + estado + "' and (rm.rmov_cantR = 0 or rm.rmov_cantR is null)";
         } else {
-            query = "select * from cmb_registro_movimientos rm  left outer join cmb_presentacion pr on rm.rmov_pre_id = pr.pre_id where rm.rmov_res_id = " + res_id + " and rm.rmov_estado = '" + estado + "'";
+            query = "select rm.[rmov_id] ,pr.pre_name, rm.[rmov_DocDate], "
+            + "rm.[rmov_itemCode], rm.[rmov_itemName], rm.[rmov_codeBar1], "
+            + "rm.[rmov_codeBar2], rm.[rmov_OT], rm.[rmov_cantidad], rm.[rmov_cantR], "
+            + "rm.[rmov_pre_id], rm.[rmov_tmov_id], rm.[rmov_alm_origen], rm.[rmov_alm_destino], "
+            + "rm.[rmov_res_id], rm.[rmov_res_name], rm.[rmov_fecha_pdev], rm.[rmov_entregado], "
+            + "rm.[rmov_devuelto], rm.[rmov_destruido], rm.[rmov_reasig_codBar], rm.[rmov_vacio], "
+            + "rm.[rmov_estado], rm.[rmov_comentario], rm.[created_at], rm.[updated_at], rm.[rmov_DistNumber]"
+            + " from cmb_registro_movimientos rm"
+            + "  left outer join cmb_presentacion pr"
+            + " on rm.rmov_pre_id = pr.pre_id"
+            + " where rm.rmov_res_id = "+res_id+" and rm.rmov_estado = '"+estado+"'";
         }
 
         ResultSet rs;

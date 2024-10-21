@@ -26,6 +26,7 @@
         while (rs.next()) {
             JSONObject lote = new JSONObject();
             lote.put("lote_id", rs.getString("sysnumber"));
+            lote.put("itemcode", rs.getString("itemcode"));
             lote.put("lote_name", rs.getString("DistNumber"));
             lote.put("cantidad_lote", rs.getString("Quantity"));
             lotes.put(lote);

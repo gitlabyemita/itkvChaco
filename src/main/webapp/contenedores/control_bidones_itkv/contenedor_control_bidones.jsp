@@ -12,7 +12,7 @@
 
 <%  String version = "Test";
     String desc_version = "Test";
-    ResultSet rsTM, rsRes, rsResE,rsArt;
+    ResultSet rsTM, rsRes, rsResE, rsArt;
     Statement st = connection.createStatement();
     Statement st1 = connection.createStatement();
     Statement st3 = connection.createStatement();
@@ -134,7 +134,7 @@
                             <label for="lote">Lote</label>
                             <select id="lote" name="lote" data-live-search="true" class="form-control form-control-sm selectpicker">   
                                 <option value="">Seleccione previamente un artículo</option>
-                            </select>
+                            </select> 
                         </div>
                     </div>
                 </div>

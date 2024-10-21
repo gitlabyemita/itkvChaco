@@ -226,7 +226,7 @@ function traerLoteArticulo(cod_art) {
 
                     // Iteramos sobre las opciones recibidas y las agregamos al select
                     res.lotes.forEach(option => {
-                        newOption += `<option value="${option.lote_id}" cantidad="${option.cantidad_lote}" name="${option.lote_name}">Lote: ${option.lote_name} - Stock: ${option.cantidad_lote}</option>`;
+                        newOption += `<option value="${option.lote_id}" codigo="${option.itemcode}" cantidad="${option.cantidad_lote}" name="${option.lote_name}">Lote: ${option.lote_name} - Stock: ${option.cantidad_lote}</option>`;
                     });
 
                     // Insertamos las nuevas opciones en el select
@@ -246,6 +246,25 @@ function traerLoteArticulo(cod_art) {
         $("#lote").html("<option value=''>Seleccione previamente un art&iacute;culo</option>");
         $("#lote").selectpicker('refresh');
     }
+}
+
+function actualizarCantidadLote(cantidadRestar) {
+    let $lote = $("#lote").find(':selected');
+    let cant_stock = parseFloat($lote.attr('cantidad')) || 0;
+    let cant_restar_parse = parseFloat(cantidadRestar) || 0;
+
+    // Restamos la cantidad
+    let nuevoStock = cant_stock - cant_restar_parse;
+
+    // Actualizamos el atributo 'cantidad' con el nuevo valor
+    $lote.attr('cantidad', nuevoStock);
+
+    // Actualizamos el texto visible en el <option> del select
+    let lote_name = $lote.attr('name');
+    $lote.text(`Lote: ${lote_name} - Stock: ${nuevoStock}`);
+
+    // Refrescamos el select para que los cambios se reflejen
+    $("#lote").selectpicker('refresh');
 }
 
 /*con esta funcion ejecutamos el crud para luego agregar una nueva fila en la grilla*/
@@ -353,6 +372,7 @@ function agregarBidonGrilla() {
                             res.id
                             );
                     toastr.success(res.mensaje, "El bid&oacute;n " + res.id);
+                    actualizarCantidadLote(cantidad);
                 } else if (res.tipo === 2) {
                     $.ajax({
                         type: "post",
@@ -417,7 +437,7 @@ function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, res
     // Obtener la cantidad de filas actuales para calcular el índice
     const index = tablaBidones.rows().count() + 1; // Agregar 1 para obtener el nuevo índice
     const newData = [
-        '<button id=\"btn' + accion + '\" class=\"btn btn-warning text-center\" onclick=\"deshacerCargaBidon(' + accion + ')\"><i class=\"fa-solid fa-trash\"></i></button>',
+        '<button id=\"btn' + accion + '\" class=\"btn btn-warning text-center\" onclick=\"deshacerCargaBidon(' + accion + ', ' + cantidad + ')\"><i class=\"fa-solid fa-trash\"></i></button>',
         index,
         mov_id,
         cantidadR,
@@ -524,7 +544,7 @@ function traerGrillaBidones(responsable) {
             if (estado == "P") {
                 bidones.forEach(fila => {
                     let newRow = tablaBidones.row.add([
-                        "<button id='btnEliminarBidon' class='btn btn-sm btn-warning text-center' onclick='deshacerCargaBidon(" + fila.mov_id + ")'><i class='fa-solid fa-trash'></i></button>",
+                        "<button id='btnEliminarBidon' class='btn btn-sm btn-warning text-center' onclick='deshacerCargaBidon(" + fila.mov_id + "," + fila.cantidadEntregada + ")'><i class='fa-solid fa-trash'></i></button>",
                         index, // Añadir el índice en la primera columna
                         fila.mov_id,
                         fila.cantidadRecibida,
@@ -547,14 +567,16 @@ function traerGrillaBidones(responsable) {
                 tablaBidones.order([1, 'desc']).draw(); // 'desc' para ordenar de mayor a menor en la columna mov_id
             } else if (estado == "E") {
                 bidones.forEach(fila => {
+                    let cantidadRecibida = fila.cantidadRecibida ? parseFloat(fila.cantidadRecibida).toFixed(2) : "";
+                    let cantidadEntregada = parseFloat(fila.cantidadEntregada).toFixed(2);
                     let newRow = tablaBidones.row.add([
                         `<input type="checkbox" class="checkbox" value="${fila.mov_id}" onchange="mostrarOcultarCeldabidon(${fila.mov_id})"/>`, // Checkbox para identificar el mov_id
                         index,
                         fila.mov_id,
-                        `<input type="number" id="cant${fila.mov_id}" class="form-control editable" value="${fila.cantidadRecibida}" style="display:none;" onblur="cantidadRestante(${fila.mov_id}, this)" onkeypress="cantidadRestante(${fila.mov_id}, this)"/>`, // Celda editable para cantidadRecibida
-                        fila.cantidadEntregada,
+                        `<span id="cantspan${fila.mov_id}">${cantidadRecibida}</span><input type="number" id="cant${fila.mov_id}" class="form-control editable" value="${cantidadRecibida}" style="display:none;" onblur="cantidadRestante(${fila.mov_id}, this)" onkeypress="cantidadRestante(${fila.mov_id}, this)"/>`, // Celda editable para cantidadRecibida
+                        cantidadEntregada,
                         fila.codigoBarra,
-                        `<input type="text" id="code${fila.mov_id}" class="form-control editable" value="${fila.codigoBarra2}" style="display:none;" onblur="escanCodBarReasig(${fila.mov_id}, this)" onkeypress="escanCodBarReasig(${fila.mov_id}, this)"/>`, // Celda editable para codigoBarra2
+                        `<span id="codespan${fila.mov_id}">${fila.codigoBarra2}</span><input type="text" id="code${fila.mov_id}" class="form-control editable" value="${fila.codigoBarra2}" style="display:none;" onblur="escanCodBarReasig(${fila.mov_id}, this)" onkeypress="escanCodBarReasig(${fila.mov_id}, this)"/>`, // Celda editable para codigoBarra2
                         fila.fechaDevolucion,
                         fila.nombre,
                         fila.presentacion,
@@ -615,112 +637,112 @@ function traerGrillaBidones(responsable) {
 }
 
 function traerGrillaBidonesV2(responsable) {
-    let tipo = $("#tipo_mov").val(); // Capturamos el valor de tipo_mov
-    let estado;
-    if (tipo == 1) {
-        estado = "P";
-    } else if (tipo == 2) {
-        estado = "E";
-    } else {
-        estado = "R";
-    }
-    clearTable(); // Limpia la tabla antes de agregar nuevos datos
-
-    // Inicializamos la tabla de bidones con DataTables
-    tablaBidones = $("#tabla-bidones").DataTable({
-        "destroy": true,
-        "serverSide": true,
-        "order": [[0, 'desc']], // Ordenar inicialmente por la columna 0 (índice) de mayor a menor
-        dom: "Bfrtip",
-        "language": {
-            sSearch: "Buscar:",
-            sLengthMenu: "Mostrar _MENU_ registros",
-            sZeroRecords: "No se encontraron resultados",
-            sEmptyTable: "Ningún dato disponible en esta tabla",
-            sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
-            sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
-            sLoadingRecords: "Cargando...",
-            oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"}
-        },
-        buttons: [
-            {
-                extend: 'colvis',
-                text: 'MOSTRAR / OCULTAR',
-                exportOptions: {
-                    columns: ':visible'
-                }
-            }
-        ],
-        "ajax": {
-            "url": "/consultas/control_bidones_itkv/consulta_obj_bidones_resp.jsp?responsable=" + responsable + "&estado=" + estado
-        },
-        columns: [
-            // Columna de índice dinámico
-            {
-                data: null,
-                className: 'text-center',
-                orderable: false,
-                createdCell: function (td, cellData, rowData, rowIndex) {
-                    $(td).html(rowIndex + 1); // Índice dinámico
-                }
-            },
-            {data: 'mov_id', name: 'mov_id', className: 'text-center', orderable: false},
-            {data: 'codigoBarra', name: 'codigoBarra', orderable: false},
-            {
-                data: 'codigoBarra2',
-                name: 'codigoBarra2',
-                orderable: false,
-                createdCell: function (td, cellData, rowData) {
-                    $(td).attr('id', `code${rowData.mov_id}`);
-                    if (estado === "E") {
-                        $(td).attr('contenteditable', 'false');
-                        $(td).on('keypress', function (event) {
-                            return escanCodBarReasig(rowData.mov_id, $(this).text(), event);
-                        });
-                    }
-                }
-            },
-            {data: 'nombre', name: 'nombre', orderable: false},
-            {data: 'presentacion', name: 'presentacion', orderable: false},
-            {data: 'ot', name: 'ot', orderable: false},
-            {data: 'responsable', name: 'responsable', orderable: false},
-            {data: 'fechaDevolucion', name: 'fechaDevolucion', orderable: false},
-            {data: 'cantidadEntregada', name: 'cantidadEntregada', orderable: false},
-            {
-                data: 'cantidadRecibida',
-                name: 'cantidadRecibida',
-                orderable: false,
-                createdCell: function (td, cellData, rowData) {
-                    $(td).attr('id', `cant${rowData.mov_id}`);
-                    if (estado === "E") {
-                        $(td).attr('contenteditable', 'false');
-                        $(td).on('keypress', function (event) {
-                            return cantidadRestante(rowData.mov_id, $(this).text(), event);
-                        });
-                    }
-                }
-            },
-            {
-                data: 'mov_id',
-                orderable: false,
-                render: function (data, type, row) {
-                    return (estado === "E") ?
-                            `<input type="checkbox" class="chk-mov-id" value="${data}" onchange="mostrarOcultarCeldabidon(${data})" />` :
-                            `<button id='btnEliminarBidon' class='btn btn-warning text-center' onclick='deshacerCargaBidon(${data})'><i class='fa-solid fa-trash'></i> Deshacer</button>`;
-                }
-            }
-        ],
-        "columnDefs": [
-            {targets: [1, 2, 3, 4], className: 'text-right'},
-            {orderable: false, targets: [1, 2, 3, 4]} // Deshabilitar ordenamiento en las columnas específicas
-        ],
-
-        // Ordenar los datos después de renderizar
-        "drawCallback": function (settings) {
-            tablaBidones.order([0, 'desc']).draw(false); // Ordenar de mayor a menor la columna índice
-        }
-    });
+//    let tipo = $("#tipo_mov").val(); // Capturamos el valor de tipo_mov
+//    let estado;
+//    if (tipo == 1) {
+//        estado = "P";
+//    } else if (tipo == 2) {
+//        estado = "E";
+//    } else {
+//        estado = "R";
+//    }
+//    clearTable(); // Limpia la tabla antes de agregar nuevos datos
+//
+//    // Inicializamos la tabla de bidones con DataTables
+//    tablaBidones = $("#tabla-bidones").DataTable({
+//        "destroy": true,
+//        "serverSide": true,
+//        "order": [[0, 'desc']], // Ordenar inicialmente por la columna 0 (índice) de mayor a menor
+//        dom: "Bfrtip",
+//        "language": {
+//            sSearch: "Buscar:",
+//            sLengthMenu: "Mostrar _MENU_ registros",
+//            sZeroRecords: "No se encontraron resultados",
+//            sEmptyTable: "Ningún dato disponible en esta tabla",
+//            sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+//            sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+//            sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+//            sLoadingRecords: "Cargando...",
+//            oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"}
+//        },
+//        buttons: [
+//            {
+//                extend: 'colvis',
+//                text: 'MOSTRAR / OCULTAR',
+//                exportOptions: {
+//                    columns: ':visible'
+//                }
+//            }
+//        ],
+//        "ajax": {
+//            "url": "/consultas/control_bidones_itkv/consulta_obj_bidones_resp.jsp?responsable=" + responsable + "&estado=" + estado
+//        },
+//        columns: [
+//            // Columna de índice dinámico
+//            {
+//                data: null,
+//                className: 'text-center',
+//                orderable: false,
+//                createdCell: function (td, cellData, rowData, rowIndex) {
+//                    $(td).html(rowIndex + 1); // Índice dinámico
+//                }
+//            },
+//            {data: 'mov_id', name: 'mov_id', className: 'text-center', orderable: false},
+//            {data: 'codigoBarra', name: 'codigoBarra', orderable: false},
+//            {
+//                data: 'codigoBarra2',
+//                name: 'codigoBarra2',
+//                orderable: false,
+//                createdCell: function (td, cellData, rowData) {
+//                    $(td).attr('id', `code${rowData.mov_id}`);
+//                    if (estado === "E") {
+//                        $(td).attr('contenteditable', 'false');
+//                        $(td).on('keypress', function (event) {
+//                            return escanCodBarReasig(rowData.mov_id, $(this).text(), event);
+//                        });
+//                    }
+//                }
+//            },
+//            {data: 'nombre', name: 'nombre', orderable: false},
+//            {data: 'presentacion', name: 'presentacion', orderable: false},
+//            {data: 'ot', name: 'ot', orderable: false},
+//            {data: 'responsable', name: 'responsable', orderable: false},
+//            {data: 'fechaDevolucion', name: 'fechaDevolucion', orderable: false},
+//            {data: 'cantidadEntregada', name: 'cantidadEntregada', orderable: false},
+//            {
+//                data: 'cantidadRecibida',
+//                name: 'cantidadRecibida',
+//                orderable: false,
+//                createdCell: function (td, cellData, rowData) {
+//                    $(td).attr('id', `cant${rowData.mov_id}`);
+//                    if (estado === "E") {
+//                        $(td).attr('contenteditable', 'false');
+//                        $(td).on('keypress', function (event) {
+//                            return cantidadRestante(rowData.mov_id, $(this).text(), event);
+//                        });
+//                    }
+//                }
+//            },
+//            {
+//                data: 'mov_id',
+//                orderable: false,
+//                render: function (data, type, row) {
+//                    return (estado === "E") ?
+//                            `<input type="checkbox" class="chk-mov-id" value="${data}" onchange="mostrarOcultarCeldabidon(${data})" />` :
+//                            `<button id='btnEliminarBidon' class='btn btn-warning text-center' onclick='deshacerCargaBidon(${data})'><i class='fa-solid fa-trash'></i> Deshacer</button>`;
+//                }
+//            }
+//        ],
+//        "columnDefs": [
+//            {targets: [1, 2, 3, 4], className: 'text-right'},
+//            {orderable: false, targets: [1, 2, 3, 4]} // Deshabilitar ordenamiento en las columnas específicas
+//        ],
+//
+//        // Ordenar los datos después de renderizar
+//        "drawCallback": function (settings) {
+//            tablaBidones.order([0, 'desc']).draw(false); // Ordenar de mayor a menor la columna índice
+//        }
+//    });
 }
 
 /* Captura los eventos al oprimir Enter o escanear con el lector */
@@ -808,6 +830,8 @@ function mostrarOcultarCeldabidon(mov_id) {
         if (estado === "R") {
             $("#code" + mov_id).show();
             $("#cant" + mov_id).show();
+            $("#cantspan" + mov_id).hide();
+            $("#codespan" + mov_id).hide();
         }
 
         // Restaurar la paginación original y volver a la página en la que estábamos
@@ -817,13 +841,34 @@ function mostrarOcultarCeldabidon(mov_id) {
         if (estado === "R") {
             $("#code" + mov_id).hide();
             $("#cant" + mov_id).hide();
+            $("#cantspan" + mov_id).show();
+            $("#codespan" + mov_id).show();
         }
     }
 }
 
+function sumarCantidadLote(cantidadSumar) {
+    let $lote = $("#lote").find(':selected');
+    let cant_stock = parseFloat($lote.attr('cantidad')) || 0;
+
+    // Sumamos la cantidad al stock actual
+    let nuevoStock = cant_stock + cantidadSumar;
+
+    // Actualizamos el atributo 'cantidad' con el nuevo valor
+    $lote.attr('cantidad', nuevoStock);
+
+    // Actualizamos el texto visible en el <option> del select
+    let lote_name = $lote.attr('name');
+    $lote.text(`Lote: ${lote_name} - Stock: ${nuevoStock}`);
+
+    // Refrescamos el select para que los cambios se reflejen
+    $("#lote").selectpicker('refresh');
+}
+
+
 /*con esta función ejecutamos un crud para borrar la fila luego de hacer click en el boton deshacer
  * si tiene exito remueve la fila*/
-function deshacerCargaBidon(mov_id) {
+function deshacerCargaBidon(mov_id, cantidad) {
     $.ajax({
         type: "post",
         url: "cruds/control_bidones_itkv/crud_deshacer_bidon.jsp",
@@ -834,6 +879,7 @@ function deshacerCargaBidon(mov_id) {
             if (res.tipo == 1) {
                 tablaBidones.row($('#row' + mov_id)).remove().draw();
                 toastr.success(res.mensaje, "mov_id: " + mov_id + " ");
+                sumarCantidadLote(cantidad);
             } else {
                 toastr.error(res.mensaje, "Error: ");
             }
@@ -1014,21 +1060,34 @@ function escanCodBarReasig(mov_id, inputElement) {
     const $inputElement = $(inputElement); // Convertir a jQuery object
     const cod_bar_actual = $inputElement.val().trim();
     const cod_bar_anterior = $inputElement.data('original-value') || '';
+    const tdElement = $(inputElement).closest('td');
+    const trElement = $(inputElement).closest('tr');
+
+    const cod_barra = trElement.find('td:eq(5)').text(); // Cantidad entregada
 
     // Validamos que no sea un código vacío o nulo, y que haya habido un cambio
-    if ((event.keyCode === 13 || event.which === 13 || event.type === "blur") && cod_bar_actual !== "" && cod_bar_actual !== cod_bar_anterior) {
+    if ((event.keyCode === 13 || event.which === 13 || event.type === "blur") && cod_bar_actual !== "") {
         // Guardamos el valor previo en un atributo para futuras validaciones
         $inputElement.data('original-value', cod_bar_actual);
-
-        // Llamamos a la función para reasignar el código de barras
-        reasignarCodBar(mov_id, cod_bar_actual, $inputElement); // Pasamos el inputElement
+        if (cod_bar_actual !== cod_barra && cod_bar_actual !== cod_bar_anterior) {
+            // Llamamos a la función para reasignar el código de barras
+            reasignarCodBar(mov_id, cod_bar_actual, $inputElement); // Pasamos el inputElement   
+        } else if (cod_barra === cod_bar_actual) {
+            aviso_generico(0, "El c&oacute;digo de barras ya existe, favor verificar");
+            $(inputElement).val('');
+            $(tdElement).addClass('update-error').removeClass('update-pending');
+            setTimeout(function () {
+                $(tdElement).removeClass('update-error');
+            }, 1000);
+        }
     } else if (cod_bar_actual === "") {
-        console.log('El código de barras está vacío. No se enviarán datos.');
+        console.log('El codigo de barras esta vacio. No se enviaran datos.');
     }
 }
 
 // Función que realiza la petición AJAX para reasignar el código de barras
-function reasignarCodBar(mov_id, cod_bar) {  // Añadimos $inputElement como parámetro
+function reasignarCodBar(mov_id, cod_bar, inputElement) {  // Añadimos $inputElement como parámetro
+    const tdElement = $(inputElement).closest('td');
     $.ajax({
         type: "post",
         url: "cruds/control_bidones_itkv/crud_reasig_code_bar.jsp",
@@ -1037,20 +1096,27 @@ function reasignarCodBar(mov_id, cod_bar) {  // Añadimos $inputElement como par
             cod_bar: cod_bar
         },
         beforeSend: function () {
-            // Opcional: Mostrar un indicador de carga
+            $(tdElement).addClass('update-pending');
         },
         success: function (res) {
             if (res.tipo == 1) {
-                aviso_generico(res.tipo, res.mensaje);
+                aviso_generico(res.tipo, "C&oacutedigo reasignado correctamente");
+                $(tdElement).addClass('update-success').removeClass('update-pending');
+                setTimeout(function () {
+                    $(tdElement).removeClass('update-success');
+                }, 800);
 
-                // Si la respuesta es exitosa (tipo == 1), hacer focus en el input para seguir escaneando
-//                $("#cod_barra").focus();
             } else {
-                console.log('Error al reasignar el código de barras: ', res.mensaje);
+                aviso_generico(res.tipo, "El c&oacute;digo no fue reasignado, int&eacute;ntelo nuevamente");
+                $(inputElement).val('');
+                $(tdElement).addClass('update-error').removeClass('update-pending');
+                setTimeout(function () {
+                    $(tdElement).removeClass('update-error');
+                }, 1000);
             }
         },
         error: function (err) {
-            console.error('Error en la petición AJAX: ', err);
+            console.error('Error en la peticion AJAX: ', err);
         }
     });
 }
@@ -1061,21 +1127,48 @@ function cantidadRestante(mov_id, inputElement) {
     const $inputElement = $(inputElement); // Convertir a jQuery object
     const cant_actual = $inputElement.val().trim();
     const cant_anterior = $inputElement.data('original-value') || '';
+    const tdElement = $(inputElement).closest('td');
+    const trElement = $(inputElement).closest('tr');
+    const cantTd = $("#cantspan" + mov_id).text();
+
+
+    // Obtener todos los datos de la fila
+    const cantEntregada = parseFloat(trElement.find('td:eq(4)').text()); // Cantidad entregada
 
     // Validamos que no sea una cantidad vacía o nula, y que haya habido un cambio
     if ((event.keyCode === 13 || event.which === 13 || event.type === "blur") && cant_actual !== "" && cant_actual !== cant_anterior) {
-        // Guardamos el valor previo en un atributo para futuras validaciones
-        $inputElement.data('original-value', cant_actual);
+        const cantParsed = parseFloat(cant_actual);
+        const cantTdParsed = parseFloat(cantTd);
 
-        // Llamamos a la función para procesar la cantidad restante
-        actualizarCantidad(mov_id, cant_actual, $inputElement); // Pasamos el inputElement
+        // Verificamos que la cantidad actual sea un número válido
+        if (cantParsed >= 0 && cantParsed <= cantEntregada && cantParsed !== cantTdParsed) {
+            // Llamamos al CRUD para actualizar la cantidad restante
+            actualizarCantidad(mov_id, cantParsed, $inputElement); // Pasamos el inputElement
+            // Asignamos el valor solo si es válido
+            $inputElement.data('original-value', cant_actual);
+        } else if (cantParsed === cantTdParsed) {
+            console.log('El valor es el mismo, no se enviara al crud');
+        } else {
+            // Mostrar mensajes de error y restaurar el valor original si no es válido
+            if (cantParsed < 0) {
+                toastr.error('La cantidad no puede ser un n&uacute;mero negativo', "Error: ");
+            } else if (cantParsed > cantEntregada) {
+                toastr.error('La cantidad recibida no puede ser mayor a la entregada', "Error: ");
+            }
+            $(inputElement).val('');
+            $(tdElement).addClass('update-error').removeClass('update-pending');
+            setTimeout(function () {
+                $(tdElement).removeClass('update-error');
+            }, 1000);
+        }
     } else if (cant_actual === "") {
-        console.log('La cantidad está vacía. No se enviarán datos.');
+        console.log('La cantidad esta vacia. No se enviaran datos.');
     }
 }
 
 // Función que realiza la petición AJAX para actualizar la cantidad restante
 function actualizarCantidad(mov_id, cant, inputElement) {
+    const tdElement = $(inputElement).closest('td');
     $.ajax({
         type: "post",
         url: "cruds/control_bidones_itkv/crud_carga_cant_rest.jsp",
@@ -1084,22 +1177,27 @@ function actualizarCantidad(mov_id, cant, inputElement) {
             cant: cant
         },
         beforeSend: function () {
-            // Opcional: Mostrar indicador de carga si es necesario
+            $(tdElement).addClass('update-pending');
         },
         success: function (res) {
             if (res.tipo == 1) {
                 toastr.success(res.mensaje, "Mensaje de &eacute;xito: ");
+                $(tdElement).addClass('update-success').removeClass('update-pending');
+                setTimeout(function () {
+                    $(tdElement).removeClass('update-success');
+                }, 800);
 
-                // Si la respuesta es exitosa (tipo == 1), hacer focus en el input para seguir ingresando cantidades
-//                $(inputElement).focus();
             } else {
                 toastr.error('Error al actualizar la cantidad restante: ' + res.mensaje, "Error: ");
                 $(inputElement).val('');
-
+                $(tdElement).addClass('update-error').removeClass('update-pending');
+                setTimeout(function () {
+                    $(tdElement).removeClass('update-error');
+                }, 1000);
             }
         },
         error: function (err) {
-            console.log('Error en la petici&oacute;n AJAX: ', err);
+            console.log('Error en la peticion AJAX: ', err);
         }
     });
 }

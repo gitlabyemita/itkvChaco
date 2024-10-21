@@ -17,9 +17,9 @@
 
             connection.setAutoCommit(false);
             CallableStatement callableStatement = null;
-            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,?,?)}");
+            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,?,?)}");
 
-            callableStatement.setString(1, mov_id);
+            callableStatement.setInt(1, Integer.parseInt(mov_id));
             callableStatement.setFloat(2, Float.parseFloat(cant));
 
             callableStatement.registerOutParameter(3, java.sql.Types.INTEGER); // id
