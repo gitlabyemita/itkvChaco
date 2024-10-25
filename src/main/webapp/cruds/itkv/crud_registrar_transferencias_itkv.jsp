@@ -71,7 +71,6 @@
                 if (tipo_respuesta == 0) {
                     connection.rollback();
                 } else {
-                    connection.rollback();
                     connection.commit();
                 }
 
