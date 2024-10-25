@@ -18,19 +18,24 @@
         String estado = request.getParameter("estado");
         String query = "";
         if (res_id.equals("TODOS") && estado.equals("R")) {
-            query = "select * from cmb_registro_movimientos rm  left outer join cmb_presentacion pr on rm.rmov_pre_id = pr.pre_id where rm.rmov_estado = '" + estado + "' and (rm.rmov_cantR = 0 or rm.rmov_cantR is null)";
+            query = "select * "
+                    + "from cmb_registro_movimientos rm  "
+                    + "left outer join cmb_presentacion pr "
+                    + "on rm.rmov_pre_id = pr.pre_id "
+                    + "left outer join loteOITM lo "
+                    + "on"
+                    + "rm.rmov_itemCode = lo.ItemCode"
+                    + "where rm.rmov_estado = '" + estado + "' "
+                    + "and (rm.rmov_cantR = 0 or rm.rmov_cantR is null)";
         } else {
-            query = "select rm.[rmov_id] ,pr.pre_name, rm.[rmov_DocDate], "
-            + "rm.[rmov_itemCode], rm.[rmov_itemName], rm.[rmov_codeBar1], "
-            + "rm.[rmov_codeBar2], rm.[rmov_OT], rm.[rmov_cantidad], rm.[rmov_cantR], "
-            + "rm.[rmov_pre_id], rm.[rmov_tmov_id], rm.[rmov_alm_origen], rm.[rmov_alm_destino], "
-            + "rm.[rmov_res_id], rm.[rmov_res_name], rm.[rmov_fecha_pdev], rm.[rmov_entregado], "
-            + "rm.[rmov_devuelto], rm.[rmov_destruido], rm.[rmov_reasig_codBar], rm.[rmov_vacio], "
-            + "rm.[rmov_estado], rm.[rmov_comentario], rm.[created_at], rm.[updated_at], rm.[rmov_DistNumber]"
-            + " from cmb_registro_movimientos rm"
-            + "  left outer join cmb_presentacion pr"
-            + " on rm.rmov_pre_id = pr.pre_id"
-            + " where rm.rmov_res_id = "+res_id+" and rm.rmov_estado = '"+estado+"'";
+            query = "select * "
+                    + " from cmb_registro_movimientos rm  "
+                    + " left outer join cmb_presentacion pr"
+                    + " on rm.rmov_pre_id = pr.pre_id "
+                    + " left outer join loteOITM lo "
+                    + " on"
+                    + " rm.rmov_itemCode = lo.ItemCode and rm.rmov_DistNumber = lo.DistNumber"
+                    + " where rm.rmov_res_id = " + res_id + " and rm.rmov_estado = '" + estado + "'";
         }
 
         ResultSet rs;
@@ -42,6 +47,7 @@
             JSONObject bidon = new JSONObject();
             bidon.put("codigoBarra", rs.getString("rmov_codeBar1"));
             bidon.put("codigoBarra2", rs.getString("rmov_codeBar2") == null ? "" : rs.getString("rmov_codeBar2"));
+            bidon.put("distnumber", rs.getString("distnumber") == null ? "" : rs.getString("distnumber"));
             bidon.put("nombre", rs.getString("rmov_itemName"));
             bidon.put("presentacion", rs.getString("pre_name"));
             bidon.put("ot", rs.getString("rmov_OT"));

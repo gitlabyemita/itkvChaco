@@ -1,4 +1,4 @@
-<%-- 
+    <%-- 
     Document   : consulta_obj_bidon_reutilizado
     Created on : 11 sept. 2024, 09:32:53
     Author     : Administrador
@@ -27,6 +27,7 @@
             JSONObject bidon = new JSONObject();
             bidon.put("codigoBarra", rs.getString("rmov_codeBar1"));
             bidon.put("codigoBarra2", rs.getString("rmov_codeBar2") == null ? "" : rs.getString("rmov_codeBar2"));
+            bidon.put("distnumber", rs.getString("rmov_DistNumber") == null ? "" : rs.getString("rmov_DistNumber"));
             bidon.put("nombre", rs.getString("rmov_itemName"));
             bidon.put("presentacion", rs.getString("pre_name"));
             bidon.put("ot", rs.getString("rmov_OT"));

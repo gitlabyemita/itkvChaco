@@ -182,13 +182,15 @@ function ir_salida_repuesto_itkv()
             $('#boca').val('DEP_TAL').prop('selected', true);
             $('#boca').selectpicker('refresh');
 
+            $('#horometro').val('');
 
             $("#form_add_consumo").on("submit", function (e) {
-                e.preventDefault(),
-                        registrar_transferencias_itkv();
+                e.preventDefault();
+                registrar_transferencias_itkv();
                 e.stopPropagation();
-            }),
-                    $(".autoNumeric").autoNumeric('init', {
+            });
+
+            $(".autoNumeric").autoNumeric('init', {
                 aSep: '.',
                 aDec: ',',
                 aForm: true,
@@ -203,6 +205,8 @@ function ir_salida_repuesto_itkv()
                         }
             });
             eliminar_fila_repuesto_itkv();
+            
+            asignar_rol_agricultura_select(); //seleccionamos el option agricultura de acuerdo al rol
 
             cerrar_load();
 
@@ -1107,14 +1111,20 @@ function registrar_transferencias_itkv() {
                                 Swal.showLoading()
                             }
                         });
+                        console.log("Antes de enviar el AJAX...");
+
                     },
                     success: function (res)
                     {
+                        console.log("Respuesta AJAX:", res);
                         aviso_generico(res.tipo_respuesta, res.mensaje);
                         if (res.tipo_respuesta == 1)
                         {
                             ir_salida_repuesto_itkv();
                         }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error en la solicitud AJAX:", xhr.responseText);
                     }
                 });
             }
@@ -1138,10 +1148,22 @@ function get_ultimo_litro_boca_combustible_itkv() {
             $("#lt_inicio").val(res.litro);
         }
     });
+}
 
-
-
-
+function asignar_rol_agricultura_select() {
+    $.ajax({
+        type: "POST",
+        url: ruta_consultas_itkv + "consulta_rol_agricultura.jsp",
+        success: function (res) {
+            if (res.id_rol === "1034" || res.id_rol === "1035") {
+                $("#rubro").find('option[value="AGR"]').prop('selected', true);
+                $("#rubro").selectpicker('refresh');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error en la consulta:", xhr.responseText);
+        }
+    });
 }
 
 function registrar_salida_insumo_veterinario_itkv() {

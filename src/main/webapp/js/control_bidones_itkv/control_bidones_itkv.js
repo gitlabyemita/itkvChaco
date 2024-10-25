@@ -42,6 +42,13 @@ function irControlMovimientosBidones() {
                         exportOptions: {
                             columns: ':visible'
                         }
+                    },
+                    {
+                        extend: 'copy',
+                        text: 'COPIAR GRILLA',
+                        exportOptions: {
+                            columns: ':visible'
+                        }
                     }
                 ],
                 keys: {clipboard: !1}
@@ -224,9 +231,37 @@ function traerLoteArticulo(cod_art) {
                 if (res.lotes && res.lotes.length > 0) {
                     let newOption = ""; // Inicializamos correctamente como cadena vacía
 
-                    // Iteramos sobre las opciones recibidas y las agregamos al select
+                    // Recorrer los lotes del AJAX para agregarlos al select
                     res.lotes.forEach(option => {
-                        newOption += `<option value="${option.lote_id}" codigo="${option.itemcode}" cantidad="${option.cantidad_lote}" name="${option.lote_name}">Lote: ${option.lote_name} - Stock: ${option.cantidad_lote}</option>`;
+                        // Inicializamos la cantidad total en la tabla para este lote específico
+                        let totalCantidadTabla = 0;
+
+                        // Recorremos las filas de la tabla para sumar la cantidad correspondiente al mismo artículo y lote
+                        tablaBidones.rows().every(function () {
+                            let data = this.data();
+                            let articulo = data[8]; // Nombre del artículo en la columna 8
+                            let distnumber = data[9]; // Número del lote en la columna 9
+                            let loteConcatTabla = articulo + '-' + distnumber;
+                            let loteConcatSelect = option.itemname + '-' + option.lote_name;
+
+                            console.log(`Lote en tabla: ${loteConcatTabla}, Lote en select: ${loteConcatSelect}`);
+
+                            // Si el artículo y el lote en la tabla coinciden con el lote actual del select
+                            if (loteConcatTabla === loteConcatSelect) {
+                                console.log(`Sumando cantidad: ${parseFloat(data[4])} al lote ${loteConcatTabla}`);
+                                totalCantidadTabla += parseFloat(data[4]); // Sumar la cantidad del lote en la tabla
+                            }
+                        });
+
+
+                        // Restar la cantidad acumulada de la tabla del stock del lote en el select
+                        let stockRestante = parseFloat(option.cantidad_lote) - totalCantidadTabla;
+
+                        // Crear la opción del select con el stock restante
+                        newOption += `
+                            <option value="${option.lote_id}" codigo="${option.itemcode}" cantidad="${stockRestante}" name="${option.lote_name}">
+                                ItemName: ${option.itemname} - DistNumber: ${option.lote_name} - Stock: ${stockRestante}
+                            </option>`;
                     });
 
                     // Insertamos las nuevas opciones en el select
@@ -248,6 +283,7 @@ function traerLoteArticulo(cod_art) {
     }
 }
 
+
 function actualizarCantidadLote(cantidadRestar) {
     let $lote = $("#lote").find(':selected');
     let cant_stock = parseFloat($lote.attr('cantidad')) || 0;
@@ -260,8 +296,9 @@ function actualizarCantidadLote(cantidadRestar) {
     $lote.attr('cantidad', nuevoStock);
 
     // Actualizamos el texto visible en el <option> del select
+    let articulo = $("#articulo").find(':selected').attr('name');
     let lote_name = $lote.attr('name');
-    $lote.text(`Lote: ${lote_name} - Stock: ${nuevoStock}`);
+    $lote.text(`ItemName: ${articulo} - DistNumber: ${lote_name} - Stock: ${nuevoStock}`);
 
     // Refrescamos el select para que los cambios se reflejen
     $("#lote").selectpicker('refresh');
@@ -367,9 +404,10 @@ function agregarBidonGrilla() {
                             ot,
                             resp,
                             f_dev,
-                            cantidad,
+                            parseFloat(cantidad).toFixed(1),
                             "",
-                            res.id
+                            res.id,
+                            lote
                             );
                     toastr.success(res.mensaje, "El bid&oacute;n " + res.id);
                     actualizarCantidadLote(cantidad);
@@ -395,7 +433,8 @@ function agregarBidonGrilla() {
                                         fila.fechaDevolucion,
                                         fila.cantidadEntregada,
                                         fila.cantidadRecibida,
-                                        fila.mov_id
+                                        fila.mov_id,
+                                        fila.distnumber
                                         );
                             });
                             toastr.success(res2.mensaje, "El bid&oacute;n reutilizado correctamente" + fila.mov_id);
@@ -433,7 +472,7 @@ function agregarBidonGrilla() {
 }
 
 /*esta funcion agrega la nueva fila*/
-function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, resp, f_dev, cantidad, cantidadR, accion) {
+function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, resp, f_dev, cantidad, cantidadR, accion, distnumber) {
     // Obtener la cantidad de filas actuales para calcular el índice
     const index = tablaBidones.rows().count() + 1; // Agregar 1 para obtener el nuevo índice
     const newData = [
@@ -446,6 +485,7 @@ function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, res
         cod_barra2,
         f_dev,
         name_art,
+        distnumber,
         pres,
         ot,
         resp
@@ -548,11 +588,12 @@ function traerGrillaBidones(responsable) {
                         index, // Añadir el índice en la primera columna
                         fila.mov_id,
                         fila.cantidadRecibida,
-                        fila.cantidadEntregada,
+                        parseFloat(fila.cantidadEntregada).toFixed(1),
                         fila.codigoBarra,
                         fila.codigoBarra2,
                         fila.fechaDevolucion,
                         fila.nombre,
+                        fila.distnumber,
                         fila.presentacion,
                         fila.ot,
                         fila.responsable
@@ -579,6 +620,7 @@ function traerGrillaBidones(responsable) {
                         `<span id="codespan${fila.mov_id}">${fila.codigoBarra2}</span><input type="text" id="code${fila.mov_id}" class="form-control editable" value="${fila.codigoBarra2}" style="display:none;" onblur="escanCodBarReasig(${fila.mov_id}, this)" onkeypress="escanCodBarReasig(${fila.mov_id}, this)"/>`, // Celda editable para codigoBarra2
                         fila.fechaDevolucion,
                         fila.nombre,
+                        fila.distnumber,
                         fila.presentacion,
                         fila.ot,
                         fila.responsable
@@ -601,6 +643,7 @@ function traerGrillaBidones(responsable) {
                         fila.codigoBarra2,
                         fila.fechaDevolucion,
                         fila.nombre,
+                        fila.distnumber,
                         fila.presentacion,
                         fila.ot,
                         fila.responsable

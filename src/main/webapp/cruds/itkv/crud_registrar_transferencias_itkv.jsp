@@ -1,7 +1,6 @@
 <%@page import="com.microsoft.sqlserver.jdbc.SQLServerDataTable"%>
 <%@page import="itkv.itkv_datos"%>
 <%@page import="com.fasterxml.jackson.databind.ObjectMapper"%>
-<%@page import="org.omg.CORBA.INTERNAL"%>
 <%@page import="org.json.JSONObject"%>
 <%@page import="java.sql.CallableStatement"%>
 <%@page import="java.io.IOException"%>
@@ -21,6 +20,7 @@
      
         String id_ubicacion     = request.getParameter("id_ubicacion");
         String desc_ubicacion   = request.getParameter("desc_ubicacion");
+        String horometro   = request.getParameter("horometro");
           
 
         
@@ -46,7 +46,7 @@
              
 
                 CallableStatement callableStatement = null;
-                callableStatement = connection.prepareCall("{call [itkv_transferencias_insert] (?,?,?,?,?,?,?,?,?,?,?,?,?)}");
+                callableStatement = connection.prepareCall("{call [itkv_transferencias_insert_v3] (?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
                 callableStatement.setString (1, responsable);
                 callableStatement.setInt    (2, Integer.parseInt(id_usuario));
                 callableStatement.setString (3, id_activo);
@@ -58,6 +58,7 @@
                 callableStatement.setObject(9, DataTableGrilla); 
                 callableStatement.setString (10, id_ubicacion); 
                 callableStatement.setString (11, desc_ubicacion); 
+                callableStatement.setInt (12, Integer.parseInt(horometro)); 
                 
                 callableStatement.registerOutParameter("estado_registro", java.sql.Types.INTEGER);
                 callableStatement.registerOutParameter("mensaje", java.sql.Types.VARCHAR);
@@ -70,6 +71,7 @@
                 if (tipo_respuesta == 0) {
                     connection.rollback();
                 } else {
+                    connection.rollback();
                     connection.commit();
                 }
 

@@ -211,6 +211,7 @@
                                 <th class="text-center" width="80">COD_BARRA REASIG</th>
                                 <th class="text-center" width="60">F_DEVOLUCION</th>
                                 <th class="text-center" width="80">NOMBRE</th>
+                                <th class="text-center" width="80">DISTNUMBER</th>
                                 <th class="text-center" width="80">PRESENTACION</th>
                                 <th class="text-center" width="60">O.T.</th>
                                 <th class="text-center" width="60">RESPONSABLE</th>
