@@ -12,18 +12,17 @@
 <%@page contentType="application/json; charset=utf-8" %>
 <%    if (sesion == true) {
 
-        String id_usuario       = (String) sesionOk.getAttribute("id_usuario");
-        String id_rol       = (String) sesionOk.getAttribute("id_rol");
+        String id_usuario = (String) sesionOk.getAttribute("id_usuario");
+        String id_rol = (String) sesionOk.getAttribute("id_rol");
 
-       
         JSONObject ob = new JSONObject();
         ob = new JSONObject();
-                connection.setAutoCommit(false);
+        connection.setAutoCommit(false);
         try {
-                ob.put("id_usuario", id_usuario);
-                ob.put("id_rol", id_rol);
+            ob.put("id_usuario", id_usuario);
+            ob.put("id_rol", id_rol);
 
-         } catch (Exception e) {
+        } catch (Exception e) {
             ob.put("id_usuario", e.getMessage());
             ob.put("id_rol", e.getMessage());
             connection.rollback();

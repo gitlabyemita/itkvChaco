@@ -55,7 +55,7 @@
             lote.put("itemcode", rs.getString("itemcode"));
             lote.put("lote_name", rs.getString("DistNumber"));
             lote.put("itemname", rs.getString("ItemName"));
-            lote.put("cantidad_lote", rs.getString("Quantity"));
+            lote.put("StockRemaining", rs.getString("StockRemaining"));
             lotes.put(lote);
         }
 

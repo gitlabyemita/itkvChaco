@@ -231,6 +231,50 @@ function traerLoteArticulo(cod_art) {
                 if (res.lotes && res.lotes.length > 0) {
                     let newOption = ""; // Inicializamos correctamente como cadena vacía
 
+                    // Iteramos sobre las opciones recibidas y las agregamos al select
+                    res.lotes.forEach(option => {
+                        newOption += `
+                                        <option value="${option.lote_id}" codigo="${option.itemcode}" cantidad="${option.StockRemaining}" name="${option.lote_name}">
+                                            ItemName: ${option.itemname} - DistNumber: ${option.lote_name} - Stock: ${option.StockRemaining}
+                                        </option>
+                                     `;
+                    });
+
+                    // Insertamos las nuevas opciones en el select
+                    $("#lote").html("<option value=''>Seleccione lote para el art&iacute;culo " + name_art + "</option>" + newOption);
+                    $("#lote").selectpicker('refresh');
+                } else {
+                    $("#lote").html("<option value=''>No hay lotes disponibles para el art&iacute;culo " + name_art + "</option>");
+                    $("#lote").selectpicker('refresh');
+                }
+            },
+            error: function (err) {
+                console.error("Error al obtener los lotes: ", err);
+            }
+        });
+    } else {
+        $("#lote").html(''); // Limpiar el select
+        $("#lote").html("<option value=''>Seleccione previamente un art&iacute;culo</option>");
+        $("#lote").selectpicker('refresh');
+    }
+}
+
+
+function traerLoteArticuloV2(cod_art) {
+    let name_art = $("#articulo").find(':selected').attr('name');
+    if (cod_art !== "") {
+        $.ajax({
+            type: "post",
+            url: "consultas/control_bidones_itkv/consulta_select_lote.jsp",
+            data: {cod_art: cod_art},
+            dataType: "json", // Aseguramos que la respuesta se trate como JSON
+            success: function (res) {
+                $("#lote").html(''); // Limpiar el select
+
+                // Verificamos si hay una lista de presentaciones
+                if (res.lotes && res.lotes.length > 0) {
+                    let newOption = ""; // Inicializamos correctamente como cadena vacía
+
                     // Recorrer los lotes del AJAX para agregarlos al select
                     res.lotes.forEach(option => {
                         // Inicializamos la cantidad total en la tabla para este lote específico
@@ -283,7 +327,7 @@ function traerLoteArticulo(cod_art) {
     }
 }
 
-
+//resta el stock desde el front
 function actualizarCantidadLote(cantidadRestar) {
     let $lote = $("#lote").find(':selected');
     let cant_stock = parseFloat($lote.attr('cantidad')) || 0;
@@ -342,7 +386,7 @@ function agregarBidonGrilla() {
             toastr.error("Debe seleccionar un lote para el art&iacute;culo " + name_art, "Error");
             return;
         }
-    } else {
+    } else if (pres_unica == 0) {
         let cant_unitaria = parseFloat($("#cant_unit").val());
         let cant_val = $("#cant_unit").val();
         let cant_stock = parseFloat($("#lote").find(':selected').attr('cantidad')) || 0; // Convertir a número, si es NaN, usar 0
@@ -363,8 +407,10 @@ function agregarBidonGrilla() {
         }
     }
     const table = $("#tabla-bidones").DataTable();
+    //aca verificamos si existe el codigo de barras en la grilla sin consultar la base de datos 
     var codBarExists = table.column(5).data().toArray().includes(cod_barra);
     if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art, ot)) {
+//    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_art, ot)) {
         toastr.error("Todos los campos deben estar completos", "Error");
         return;
     } else if (codBarExists) {
@@ -410,7 +456,10 @@ function agregarBidonGrilla() {
                             lote
                             );
                     toastr.success(res.mensaje, "El bid&oacute;n " + res.id);
+                    //restamos desde el front
                     actualizarCantidadLote(cantidad);
+//                    //restamos desde el back
+//                    traerLoteArticulo(cod_art);
                 } else if (res.tipo === 2) {
                     $.ajax({
                         type: "post",
@@ -476,7 +525,7 @@ function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, res
     // Obtener la cantidad de filas actuales para calcular el índice
     const index = tablaBidones.rows().count() + 1; // Agregar 1 para obtener el nuevo índice
     const newData = [
-        '<button id=\"btn' + accion + '\" class=\"btn btn-warning text-center\" onclick=\"deshacerCargaBidon(' + accion + ', ' + cantidad + ')\"><i class=\"fa-solid fa-trash\"></i></button>',
+        `<button id="btn${accion}" class="btn btn-warning text-center" onclick="deshacerCargaBidon(${accion}, ${cantidad},'${distnumber}')"><i class="fa-solid fa-trash"></i></button>`,
         index,
         mov_id,
         cantidadR,
@@ -584,7 +633,7 @@ function traerGrillaBidones(responsable) {
             if (estado == "P") {
                 bidones.forEach(fila => {
                     let newRow = tablaBidones.row.add([
-                        "<button id='btnEliminarBidon' class='btn btn-sm btn-warning text-center' onclick='deshacerCargaBidon(" + fila.mov_id + "," + fila.cantidadEntregada + ")'><i class='fa-solid fa-trash'></i></button>",
+                        `<button id="btnEliminarBidon" class="btn btn-sm btn-warning text-center" onclick="deshacerCargaBidon(${fila.mov_id},${fila.cantidadEntregada},'${fila.distnumber}')"><i class="fa-solid fa-trash"></i></button>`,
                         index, // Añadir el índice en la primera columna
                         fila.mov_id,
                         fila.cantidadRecibida,
@@ -890,9 +939,10 @@ function mostrarOcultarCeldabidon(mov_id) {
     }
 }
 
-function sumarCantidadLote(cantidadSumar) {
+function sumarCantidadLoteV1(cantidadSumar) {
     let $lote = $("#lote").find(':selected');
     let cant_stock = parseFloat($lote.attr('cantidad')) || 0;
+    let name_art = $("#articulo").find(':selected').attr('name');
 
     // Sumamos la cantidad al stock actual
     let nuevoStock = cant_stock + cantidadSumar;
@@ -902,16 +952,46 @@ function sumarCantidadLote(cantidadSumar) {
 
     // Actualizamos el texto visible en el <option> del select
     let lote_name = $lote.attr('name');
-    $lote.text(`Lote: ${lote_name} - Stock: ${nuevoStock}`);
+    $lote.text(`ItemName: ${name_art} - DistNumber: ${lote_name} - Stock: ${nuevoStock}`);
 
     // Refrescamos el select para que los cambios se reflejen
     $("#lote").selectpicker('refresh');
 }
 
+function sumarCantidadLote(distNumber, cantidadSumar) {
+    // Busca el <option> con el atributo 'name' igual al distNumber proporcionado
+    let $opcion = $("#lote").find(`option[name="${distNumber}"]`);
+
+    // Verifica si la opción existe
+    if ($opcion.length === 0) {
+        console.log("No se encontró una opción con DistNumber:", distNumber);
+        return;
+    }
+
+    // Extrae el stock actual y el nombre del artículo
+    let cant_stock = parseFloat($opcion.attr('cantidad')) || 0;
+    let name_art = $("#articulo").find(':selected').attr('name');
+
+    // Suma la cantidad al stock actual
+    let nuevoStock = cant_stock + cantidadSumar;
+
+    // Actualiza el atributo 'cantidad' con el nuevo valor
+    $opcion.attr('cantidad', nuevoStock);
+
+    // Actualiza el texto visible en el <option> correspondiente
+    let lote_name = $opcion.attr('name');
+    $opcion.text(`ItemName: ${name_art} - DistNumber: ${lote_name} - Stock: ${nuevoStock}`);
+
+    // Refresca el select para que los cambios se reflejen
+    $("#lote").selectpicker('refresh');
+}
+
+
 
 /*con esta función ejecutamos un crud para borrar la fila luego de hacer click en el boton deshacer
  * si tiene exito remueve la fila*/
-function deshacerCargaBidon(mov_id, cantidad) {
+function deshacerCargaBidon(mov_id, cantidad, distnumber) {
+    console.log(mov_id, cantidad, distnumber);
     $.ajax({
         type: "post",
         url: "cruds/control_bidones_itkv/crud_deshacer_bidon.jsp",
@@ -922,7 +1002,8 @@ function deshacerCargaBidon(mov_id, cantidad) {
             if (res.tipo == 1) {
                 tablaBidones.row($('#row' + mov_id)).remove().draw();
                 toastr.success(res.mensaje, "mov_id: " + mov_id + " ");
-                sumarCantidadLote(cantidad);
+                sumarCantidadLote(distnumber, cantidad);
+//                sumarCantidadLote(cantidad);
             } else {
                 toastr.error(res.mensaje, "Error: ");
             }
