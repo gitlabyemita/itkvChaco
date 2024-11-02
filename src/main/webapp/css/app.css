@@ -1,0 +1,263 @@
+.cursor-pointer {
+    cursor: pointer !important;
+}
+.container, .container-fluid, .container-lg, .container-md, .container-sm, .container-xl {
+    width: 100%;
+    padding-top: 25px;
+    padding-right: 7.5px;
+    padding-left: 7.5px;
+    margin-right: auto;
+    margin-left: auto;
+}
+.dataTables_wrapper {
+    padding: 10px;
+}
+.contenteditable {
+    background-color: #fefae6 !important;
+    color: #000 !important;
+    cursor: pointer;
+}
+/* Estilo para las celdas editables cuando están en foco */
+.contenteditablepd:focus {
+    background-color: #fff !important;
+    box-shadow: inset 3px 3px 3px #888 !important;
+}
+
+/* Estilo para las celdas en filas pares */
+.table-striped tbody tr:nth-of-type(even) td.contenteditablepd {
+    background-color: #dce7fc !important;
+}
+
+/* Estilo para las celdas en filas pares cuando están en foco */
+.table-striped tbody tr:nth-of-type(even) td.contenteditablepd:focus {
+    background-color: #fff !important;
+    box-shadow: inset 3px 3px 3px #888 !important;
+}
+
+/* Estilo para las celdas en filas impares */
+.table-striped tbody tr:nth-of-type(odd) td.contenteditablepd {
+    background-color: #b9cffa !important;
+}
+
+/* Estilo para las celdas en filas impares cuando están en foco */
+.table-striped tbody tr:nth-of-type(odd) td.contenteditablepd:focus {
+    background-color: #fff !important;
+    box-shadow: inset 3px 3px 3px #888 !important;
+}
+/* Mantener el color del texto en negro en el hover */
+.table-striped tbody tr:hover td.contenteditablepd {
+    color: black !important;
+    background-color: #c9c9c9 !important;
+}
+.update-error {
+    box-shadow: inset 0px 0px 8px #ff4d4d !important;
+}
+.update-success {
+    box-shadow: inset 0px 0px 8px #53b853 !important;
+}
+.update-pending {
+    box-shadow: inset 0px 0px 8px #ffcc00 !important;
+}
+.table-xs td,th {
+    padding: 0.175rem 0.75rem 0.175rem 0.35rem !important;
+    font-size: 0.85rem !important;
+}
+.table-xs button.btn-xs {
+    padding: 0.025rem 0.25rem !important;
+    font-size: 0.85rem !important;
+}
+
+input:disabled,select:disabled,textarea:disabled {
+    background-color: #ced4da;
+    color: #000 !important;
+}
+
+input[readonly],select[readonly],textarea[readonly] {
+    background-color: #ced4da;
+    color: #000 !important;
+}
+
+/* Estilo para la tabla */
+.table-detalle {
+    width: 100%;
+    margin-bottom: 1rem;
+    background-color: transparent;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+}
+
+.table-detalle th, .table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    border: 1px solid #ddd;
+}
+
+.table-detalle tbody + tbody {
+    border-top: 2px solid #ddd;
+}
+
+.table-detalle .badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 90%;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+
+.badge-success {
+    background-color: #28a745;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+}
+
+.table-responsive {
+    position: relative;
+    max-height: 70vh; /* Ajusta este valor según tus necesidades */
+    overflow-y: auto;
+}
+
+.table-responsive thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2; /* Asegura que las celdas del encabezado estén por encima de las filas */
+    background: rgb(0, 123, 255);
+    color: white;
+}
+
+.table-responsive thead tr:first-child th {
+    top: 0;
+    z-index: 3; /* Asegura que las celdas del primer tr estén por encima del segundo */
+}
+
+.table-responsive thead tr:nth-child(2) th {
+    top: 27.3125px; /* Ajusta este valor según la altura de tu primera fila de encabezado */
+    z-index: 2; /* Un z-index menor para que queden debajo del primer tr */
+}
+
+#tabla-loader {
+    display: block; /* Mostrar inicialmente */
+}
+
+#tabla-ajustes-saldos {
+    display: none; /* Ocultar la tabla hasta que se carguen los datos */
+}
+
+.modal-dialog.modal-lg {
+    max-width: 100%;
+    width: 96%;
+    margin:1.75rem auto;
+}
+
+/*esto es para las celdas que tienen un modal */
+.form-launch {
+    background-color: #fefae6aa !important;
+    color: #000 !important;
+    cursor: pointer;
+}
+
+
+/* prueba parcela */
+
+#parcela {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+.container-parcela {
+    display: grid;
+    grid-template-columns: repeat(5, 120px); /* 6m x 20px */
+    grid-template-rows: 240px; /* 12m x 20px */
+    gap: 5px;
+}
+.plot {
+    border: 2px solid #000;
+    position: relative;
+    background-color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background-image: url('https://www.transparenttextures.com/patterns/black-twill.png');
+}
+.plot div {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    font-size: 12px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+.info {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+/***********************************************************tabla responsiva versión 2**********************************************************************/
+.table-responsive-v2 {
+    position: relative;
+    max-height: 70vh; /* Ajusta este valor según tus necesidades */
+/*    overflow-y: auto;*/
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive-v2 thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;  /*Asegura que las celdas del encabezado estén por encima de las filas */
+    background: #ffc107;
+    color: white;
+}
+
+.table-responsive-v2 thead tr:first-child th {
+    top: 0;
+    z-index: 3;  /*Asegura que las celdas del primer tr estén por encima del segundo */
+}
+
+/*.table-responsive-v2 thead tr:nth-child(2) th {
+    top: 27.3125px;  Ajusta este valor según la altura de tu primera fila de encabezado 
+    z-index: 2;  Un z-index menor para que queden debajo del primer tr 
+}*/
+
+/*.table-responsive-v2 table {
+    width: 100%;
+    table-layout:fixed ;
+}*/
+
+.dato-column {
+    width: auto;
+    min-width: 125px; /* Ajusta este valor según tus necesidades */
+    max-width: 200px; /* Ajusta este valor según tus necesidades */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.day-column {
+    width: 40px; /* Ajusta este valor según tus necesidades */
+    min-width: 40px;
+}
+
+@media (max-width: 768px) {
+    .dato-column {
+        min-width: 100px;
+    }
+    .day-column {
+        width: 30px;
+        min-width: 30px;
+    }
+}

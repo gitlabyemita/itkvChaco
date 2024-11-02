@@ -80,7 +80,7 @@
             <%=rsUbicacion.getString("PrcName")%>
         </option>    
         <% }%>
-    </select>       
+    </select>    
     <strong ><a>Activo</a></strong>
     <select class="form-control selectpicker"data-live-search="true" id="activo_select" onchange="insert_valor_responsable_combo_itkv()">
         <%  while (rsActivo.next()) {%>
@@ -108,8 +108,8 @@
         <% }%>
     </select> 
     
-    
-    
+    <strong><a>Horómetro</a></strong>
+    <input type='number'  id='horometro' name='horometro' class='form-control'>    
   
 
     

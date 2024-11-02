@@ -15,14 +15,14 @@
         Statement   st      = connection.createStatement(); 
         ResultSet   rs; 
         String tr="";
-        rs = st.executeQuery(" select * from itkv_salida1 where TIPO_registro IN ('CONSUMO','TRANSFERENCIA') AND convert(date,fecha)='"+fecha+"' order by 1 desc  ");
+        rs = st.executeQuery(" select * from itkv_salida1 where TIPO_registro IN ('CONSUMO', 'CONSUMO ANDROID APP','TRANSFERENCIA') AND convert(date,fecha)='"+fecha+"' order by 1 desc  ");
         
-         String   cabecera = " <table id='grilla' class=' table-bordered compact hover' style='width:100%'>"
+         String   cabecera = " <div class='table-responsive'><table id='grilla' class='hover table table-xs compact w-100 table-striped table-bordered' style='width:100%'>"
                 + "<thead>"
                 + "<tr>"
-                 + "   <th>Nro.                     </th>"
-                   + " <th>Responsable        </th>"
-                   + " <th>Activo   </th>"
+                 + "   <th>Nro.</th>"
+                   + " <th>Responsable</th>"
+                   + " <th>Activo</th>"
                    + " <th>Km/Ho</th>"
                    + " <th>Boca de expendio</th>"
                    + " <th>Litros inicio</th>"
@@ -87,7 +87,7 @@
         
          
     
-         String grilla=""+cabecera+"  "+ tr + "</tbody> </table>";
+         String grilla=cabecera+tr + "</tbody> </table> </div>";
         ob.put("tabla", grilla);
         
         rs.close();

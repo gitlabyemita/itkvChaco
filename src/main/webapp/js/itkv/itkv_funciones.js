@@ -182,13 +182,15 @@ function ir_salida_repuesto_itkv()
             $('#boca').val('DEP_TAL').prop('selected', true);
             $('#boca').selectpicker('refresh');
 
+            $('#horometro').val('');
 
             $("#form_add_consumo").on("submit", function (e) {
-                e.preventDefault(),
-                        registrar_transferencias_itkv();
+                e.preventDefault();
+                registrar_transferencias_itkv();
                 e.stopPropagation();
-            }),
-                    $(".autoNumeric").autoNumeric('init', {
+            });
+
+            $(".autoNumeric").autoNumeric('init', {
                 aSep: '.',
                 aDec: ',',
                 aForm: true,
@@ -203,6 +205,8 @@ function ir_salida_repuesto_itkv()
                         }
             });
             eliminar_fila_repuesto_itkv();
+            
+            asignar_rol_agricultura_select(); //seleccionamos el option agricultura de acuerdo al rol
 
             cerrar_load();
 
@@ -518,8 +522,8 @@ function registrar_salida1_itkv() {
         {
             if (result.value)
             {
- 
-                    $.ajax({
+
+                $.ajax({
                     type: "POST",
                     url: ruta_cruds_itkv + "crud_registrar_salida_combustible.jsp",
                     data: {
@@ -562,8 +566,8 @@ function registrar_salida1_itkv() {
                     },
                     success: function (res)
                     {
- 
-                       if (res.tipo_respuesta > 0)
+
+                        if (res.tipo_respuesta > 0)
                         {
                             var fileInput = $('#imagenInput')[0].files[0];
                             var quality = 0.5; // Calidad de compresión (rango: 0-1)
@@ -590,13 +594,13 @@ function registrar_salida1_itkv() {
                                             'Nombre-Imagen': nombreImagen
                                         },
                                         success: function (response) {
-                                           // console.log(response);
+                                            // console.log(response);
                                             aviso_generico(1, "REGISTRADO CON EXITO.");
                                             ir_consumo_combustible_itkv();
-                                            },
+                                        },
                                         error: function (xhr, status, error) {
                                             //console.error(error);
-                                           // alert('Error al subir la imagen');
+                                            // alert('Error al subir la imagen');
                                             aviso_generico(1, "REGISTRADO CON EXITO.");
                                             ir_consumo_combustible_itkv();
                                         }
@@ -608,12 +612,12 @@ function registrar_salida1_itkv() {
                                 }
                             });
                             //  
-                        } 
+                        }
                     }
-                });       
-                    
+                });
 
-                
+
+
             }
         });
 
@@ -728,7 +732,7 @@ function ir_reporte_consumo_combustible_itkv()
             $("#contenedor_principal").html(data);
             cargar_estilo_calendario_global('dd/mm/yyyy', true);
 
-            ir_grilla_consumo_combustible_itkv()
+            ir_grilla_consumo_combustible_itkv();
             cerrar_load();
 
         },
@@ -755,13 +759,28 @@ function ir_grilla_consumo_combustible_itkv()
             $("#div_grilla").html(data.tabla);
             $("#grilla").DataTable
                     ({
-                        paging: false,
-                        "ordering": false,
-                        "language":
-                                {
-                                    "sUrl": "js/Spanish.txt"
-                                },
+                        destroy: true,
                         scrollX: true,
+                        scrollY: false,
+                        dom: "flrtip",
+                        lengthMenu: [[10, 25, 50, 100, -1], ["10 registros", "25 registros", "50 registros", "100 registros", "Mostrar todos"]],
+                        pageLength: 25,
+                        language:
+                                {
+                                    sSearch: "Buscar:",
+                                    sLengthMenu: "Mostrar _MENU_ registros",
+                                    sZeroRecords: "No se encontraron resultados",
+                                    sEmptyTable: "Ning&uacute;n dato disponible en esta tabla",
+                                    sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                                    sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                                    sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                                    sInfoThousands: ",",
+                                    sLoadingRecords: "Cargando...",
+                                    oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"},
+                                    buttons: {copyTitle: "DATOS COPIADOS", copySuccess: {_: "%d FILAS COPIADAS"}}
+                                },
+                        keys: {clipboard: !1}
+
                     });
             cerrar_load();
 
@@ -1047,6 +1066,8 @@ function registrar_transferencias_itkv() {
         var id_ubicacion = $("#ubicacion").find(':selected').attr('value');
         var desc_ubicacion = $("#ubicacion").find(':selected').attr('desc');
 
+        var horometro = $("#horometro").val();
+
         Swal.fire({
             title: 'CONFIRMACION',
             text: "DESEA GENERAR EL DOCUMENTO?",
@@ -1073,6 +1094,7 @@ function registrar_transferencias_itkv() {
                         desc_actividad: desc_actividad,
                         id_ubicacion: id_ubicacion,
                         desc_ubicacion: desc_ubicacion,
+                        horometro: horometro,
                         jsonObj: json_string
 
 
@@ -1089,14 +1111,20 @@ function registrar_transferencias_itkv() {
                                 Swal.showLoading()
                             }
                         });
+                        console.log("Antes de enviar el AJAX...");
+
                     },
                     success: function (res)
                     {
+                        console.log("Respuesta AJAX:", res);
                         aviso_generico(res.tipo_respuesta, res.mensaje);
                         if (res.tipo_respuesta == 1)
                         {
                             ir_salida_repuesto_itkv();
                         }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error en la solicitud AJAX:", xhr.responseText);
                     }
                 });
             }
@@ -1120,10 +1148,22 @@ function get_ultimo_litro_boca_combustible_itkv() {
             $("#lt_inicio").val(res.litro);
         }
     });
+}
 
-
-
-
+function asignar_rol_agricultura_select() {
+    $.ajax({
+        type: "POST",
+        url: ruta_consultas_itkv + "consulta_rol_agricultura.jsp",
+        success: function (res) {
+            if (res.id_rol === "1034" || res.id_rol === "1035") {
+                $("#rubro").find('option[value="AGR"]').prop('selected', true);
+                $("#rubro").selectpicker('refresh');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error en la consulta:", xhr.responseText);
+        }
+    });
 }
 
 function registrar_salida_insumo_veterinario_itkv() {
@@ -1312,36 +1352,36 @@ function registrar_consumo_balanceados_itkv() {
 
 
 function cuadroImagenItkv(id) {
-     
+
 
 // Realizar una solicitud AJAX a la ruta de la imagen
-$.ajax({
-  url: 'http://192.168.55.140:8000/imagen?nombreImagen='+id,
-  method: 'GET',
-  xhrFields: {
-    responseType: 'blob' // Esperamos una respuesta de tipo Blob (imagen)
-  },
-   beforeSend: function () { 
-                        Swal.fire({
-                           customClass: 'swal-wide',
-                            html: `   <div class="form-group" id="divImagen"> </div>  `,
-                             showCancelButton: false,
-                            showConfirmButton: false
-                        });
-                    },
-  success: function(response) {
-    // Crear un elemento img y establecer su atributo src con la URL de la imagen
-     var divImagen = $('#divImagen');
+    $.ajax({
+        url: 'http://192.168.55.140:8000/imagen?nombreImagen=' + id,
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob' // Esperamos una respuesta de tipo Blob (imagen)
+        },
+        beforeSend: function () {
+            Swal.fire({
+                customClass: 'swal-wide',
+                html: `   <div class="form-group" id="divImagen"> </div>  `,
+                showCancelButton: false,
+                showConfirmButton: false
+            });
+        },
+        success: function (response) {
+            // Crear un elemento img y establecer su atributo src con la URL de la imagen
+            var divImagen = $('#divImagen');
 
-      var imagen = $('<img>').attr('src', URL.createObjectURL(response));
-    // Agregar la imagen al div
-    divImagen.append(imagen);
-  },
-  error: function(xhr, status, error) {
-    // Manejar errores si es necesario
-    console.error('Error al cargar la imagen:', error);
-  }
-});
+            var imagen = $('<img>').attr('src', URL.createObjectURL(response));
+            // Agregar la imagen al div
+            divImagen.append(imagen);
+        },
+        error: function (xhr, status, error) {
+            // Manejar errores si es necesario
+            console.error('Error al cargar la imagen:', error);
+        }
+    });
 
 
 }
