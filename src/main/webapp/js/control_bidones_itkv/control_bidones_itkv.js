@@ -65,40 +65,45 @@ function irControlMovimientosBidones() {
 }
 
 function traerSelectArticulo() {
-    $.ajax({
-        type: "post",
-        url: "consultas/control_bidones_itkv/consulta_select_articulos.jsp",
-        success: function (res) {
-            $("#articulo").html(''); // Limpiar el select
+    return new Promise((resolve, reject) => {  // Agregamos el return para que efectivamente devuelva la promesa
+        $.ajax({
+            type: "post",
+            url: "consultas/control_bidones_itkv/consulta_select_articulos.jsp",
+            success: function (res) {
+                $("#articulo").html(''); // Limpiar el select
 
-            // Verificamos si hay una lista de articulos
-            if (res.articulos && res.articulos.length > 0) {
-                let newOption = ""; // Inicializamos correctamente como cadena vacía
+                // Verificamos si hay una lista de artículos
+                if (res.articulos && res.articulos.length > 0) {
+                    let newOption = "";
 
-                // Iteramos sobre las opciones recibidas y las agregamos al select
-                res.articulos.forEach(lote => {
-                    let lote_content = lote.lote_content;
-                    if (isEmpty(lote.pres_unica) && isEmpty(lote.lote_content)) {
-                        newOption += `<option disabled value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">Verificar datos - ${lote.art_id} - ${lote.art_name}</option>`;
-                        console.log(`lote id: "${lote.art_id}" nombre: "${lote.art_name}" pres_unica: "${lote.pres_unica}" lote_content: "${lote.lote_content}"`);
-                    } else if (lote_content === "Y") {
-                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name} - <span>TIENE LOTE</span></option>`;
-                    } else {
-                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}">${lote.art_id} - ${lote.art_name}</option>`;
-                    }
-                });
-                $("#articulo").html("<option value=''>Seleccione art&iacute;culo</option>" + newOption);
-                $("#articulo").selectpicker('refresh');
-            } else {
-                $("#articulo").html("<option value=''>No hay art&iacute;culos disponibles</option>");
-                $("#articulo").selectpicker('refresh');
+                    res.articulos.forEach(lote => {
+                        let lote_content = lote.lote_content;
+                        if (!lote.pres_unica && !lote.lote_content) {
+                            newOption += `<option disabled value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">Verificar datos | ${lote.art_id} | ${lote.art_name}</option>`;
+                        } else if (lote_content === "Y") {
+                            newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | TIENE LOTE</option>`;
+                        } else {
+                            newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | SIN LOTE</option>`;
+                        }
+                    });
+
+                    $("#articulo").html("<option value=''>Seleccione art&iacute;culo</option>" + newOption);
+                    $("#articulo").selectpicker('refresh');
+                } else {
+                    $("#articulo").html("<option value=''>No hay art&iacute;culos disponibles</option>");
+                    $("#articulo").selectpicker('refresh');
+                }
+
+                resolve(); // Llamamos a resolve para indicar que la operación se ha completado
+            },
+            error: function (err) {
+                console.error("Error al obtener los lotes: ", err);
+                reject(err); // Llamamos a reject si hay un error
             }
-        },
-        error: function (err) {
-            console.error("Error al obtener los lotes: ", err);
-        }
+        });
     });
 }
+
 
 function resetForm() {
     $("#ot, #dev_estimada, #cant, #bidon, #cod_barra, #cant_unit").val('');
@@ -125,11 +130,18 @@ function handleArticuloChange(element) {
         return;
     }
 
-    // Si la validación pasa, ejecutamos las funciones necesarias
-    traerSelectPresentacion(cod_art);
-    traerLoteArticulo(cod_art);
-    optionArticulo(element); // Pasamos el elemento como parámetro a esta función
+    // Ejecutar funciones necesarias en secuencia usando promesas
+    return traerSelectPresentacion(cod_art)
+            .then(() => traerLoteArticulo(cod_art))
+            .then(() => {
+                optionArticulo(element); // Pasamos el elemento como parámetro a esta función
+            })
+            .catch(error => {
+                console.error("Error al actualizar los selects:", error);
+                toastr.error("Hubo un error al actualizar los datos del artículo.");
+            });
 }
+
 
 
 /* Mostrar/ocultar opciones de acuerdo al artículo seleccionado */
@@ -153,20 +165,24 @@ function optionArticulo(element) {
 
     // Evaluar la combinación de pres_unica y lote_content
     switch (combination) {
+        /*usos en caso que sea presentación única*/
         case "1_Y":
-            toggleParameters("#row_lote", "#row_cant_unit");
+            toggleParameters("#row_lote, #row_cant_unit", "");
             break;
         case "1_N":
-            toggleParameters("", "#row_cant_unit, #row_lote");
+            toggleParameters("#row_cant_unit", "#row_lote");
             break;
+            /*usos en caso que NO sea presentación única */
         case "0_Y":
             toggleParameters("#row_lote, #row_cant_unit", "");
             break;
+        case "0_N":
+            toggleParameters("#row_lote, #row_cant_unit", "");
+//            toggleParameters("#row_cant_unit", "#row_lote");
+            break;
+            /*en caso que la presentación única es igual a null se trata como el caso anterior*/
         case "null_Y":
             toggleParameters("#row_lote, #row_cant_unit", "");
-            break;
-        case "0_N":
-            toggleParameters("#row_cant_unit", "#row_lote");
             break;
         case "null_N":
             toggleParameters("#row_cant_unit", "#row_lote");
@@ -178,36 +194,43 @@ function optionArticulo(element) {
 }
 
 function traerSelectPresentacion(cod_art) {
-    let name_art = $("#articulo").find(':selected').attr('name');
+
     if (cod_art !== "") {
-        $.ajax({
-            type: "post",
-            url: "consultas/control_bidones_itkv/consulta_select_presentacion.jsp",
-            data: {cod_art: cod_art},
-            dataType: "json", // Aseguramos que la respuesta se trate como JSON
-            success: function (res) {
-                $("#pres").html(''); // Limpiar el select
+        return new Promise((resolve, reject) => {
 
-                // Verificamos si hay una lista de presentaciones
-                if (res.presentacion && res.presentacion.length > 0) {
-                    let newOption = ""; // Inicializamos correctamente como cadena vacía
+            let name_art = $("#articulo").find(':selected').attr('name');
+            $.ajax({
+                type: "post",
+                url: "consultas/control_bidones_itkv/consulta_select_presentacion.jsp",
+                data: {cod_art: cod_art},
+                dataType: "json", // Aseguramos que la respuesta se trate como JSON
+                success: function (res) {
+                    $("#pres").html(''); // Limpiar el select
 
-                    // Iteramos sobre las opciones recibidas y las agregamos al select
-                    res.presentacion.forEach(option => {
-                        newOption += `<option value="${option.pre_id}" u_medida="${option.pre_und}" cantidad="${option.pre_cantidad}" name="${option.pre_name}">${option.pre_name} - ${option.pre_cantidad} ${option.pre_und}</option>`;
-                    });
+                    // Verificamos si hay una lista de presentaciones
+                    if (res.presentacion && res.presentacion.length > 0) {
+                        let newOption = ""; // Inicializamos correctamente como cadena vacía
 
-                    // Insertamos las nuevas opciones en el select
-                    $("#pres").html("<option value=''>Seleccione presentaci&oacute;n para el art&iacute;culo " + name_art + "</option>" + newOption);
-                    $("#pres").selectpicker('refresh');
-                } else {
-                    $("#pres").html("<option value=''>No hay presentaciones disponibles para el art&iacute;culo " + name_art + "</option>");
-                    $("#pres").selectpicker('refresh');
+                        // Iteramos sobre las opciones recibidas y las agregamos al select
+                        res.presentacion.forEach(option => {
+                            newOption += `<option value="${option.pre_id}" u_medida="${option.pre_und}" cantidad="${option.pre_cantidad}" name="${option.pre_name}">${option.pre_name} - ${option.pre_cantidad} ${option.pre_und}</option>`;
+                        });
+
+                        // Insertamos las nuevas opciones en el select
+                        $("#pres").html("<option value=''>Seleccione presentaci&oacute;n para el art&iacute;culo " + name_art + "</option>" + newOption);
+                        $("#pres").selectpicker('refresh');
+                    } else {
+                        $("#pres").html("<option value=''>No hay presentaciones disponibles para el art&iacute;culo " + name_art + "</option>");
+                        $("#pres").selectpicker('refresh');
+                    }
+                    resolve(); // Indicar que la función ha terminado
+
+                },
+                error: function (err) {
+                    console.error("Error al obtener las presentaciones: ", err);
+                    reject(err); // Manejar el error en caso de que ocurra
                 }
-            },
-            error: function (err) {
-                console.error("Error al obtener las presentaciones: ", err);
-            }
+            });
         });
     } else {
         $("#pres").html(''); // Limpiar el select
@@ -217,40 +240,47 @@ function traerSelectPresentacion(cod_art) {
 }
 
 function traerLoteArticulo(cod_art) {
-    let name_art = $("#articulo").find(':selected').attr('name');
+
     if (cod_art !== "") {
-        $.ajax({
-            type: "post",
-            url: "consultas/control_bidones_itkv/consulta_select_lote.jsp",
-            data: {cod_art: cod_art},
-            dataType: "json", // Aseguramos que la respuesta se trate como JSON
-            success: function (res) {
-                $("#lote").html(''); // Limpiar el select
+        return new Promise((resolve, reject) => {
+            let name_art = $("#articulo").find(':selected').attr('name');
 
-                // Verificamos si hay una lista de presentaciones
-                if (res.lotes && res.lotes.length > 0) {
-                    let newOption = ""; // Inicializamos correctamente como cadena vacía
+            $.ajax({
+                type: "post",
+                url: "consultas/control_bidones_itkv/consulta_select_lote.jsp",
+                data: {cod_art: cod_art},
+                dataType: "json", // Aseguramos que la respuesta se trate como JSON
+                success: function (res) {
+                    $("#lote").html(''); // Limpiar el select
 
-                    // Iteramos sobre las opciones recibidas y las agregamos al select
-                    res.lotes.forEach(option => {
-                        newOption += `
+                    // Verificamos si hay una lista de presentaciones
+                    if (res.lotes && res.lotes.length > 0) {
+                        let newOption = ""; // Inicializamos correctamente como cadena vacía
+
+                        // Iteramos sobre las opciones recibidas y las agregamos al select
+                        res.lotes.forEach(option => {
+                            newOption += `
                                         <option value="${option.lote_id}" codigo="${option.itemcode}" cantidad="${option.StockRemaining}" name="${option.lote_name}">
                                             ItemName: ${option.itemname} - DistNumber: ${option.lote_name} - Stock: ${option.StockRemaining}
                                         </option>
                                      `;
-                    });
+                        });
 
-                    // Insertamos las nuevas opciones en el select
-                    $("#lote").html("<option value=''>Seleccione lote para el art&iacute;culo " + name_art + "</option>" + newOption);
-                    $("#lote").selectpicker('refresh');
-                } else {
-                    $("#lote").html("<option value=''>No hay lotes disponibles para el art&iacute;culo " + name_art + "</option>");
-                    $("#lote").selectpicker('refresh');
+                        // Insertamos las nuevas opciones en el select
+                        $("#lote").html("<option value=''>Seleccione lote para el art&iacute;culo " + name_art + "</option>" + newOption);
+                        $("#lote").selectpicker('refresh');
+                    } else {
+                        $("#lote").html("<option value=''>No hay lotes disponibles para el art&iacute;culo " + name_art + "</option>");
+                        $("#lote").selectpicker('refresh');
+                    }
+                    resolve(); // Indicar que la función ha terminado
+
+                },
+                error: function (err) {
+                    console.error("Error al obtener los lotes: ", err);
+                    reject(err); // Manejar el error en caso de que ocurra
                 }
-            },
-            error: function (err) {
-                console.error("Error al obtener los lotes: ", err);
-            }
+            });
         });
     } else {
         $("#lote").html(''); // Limpiar el select
@@ -348,6 +378,27 @@ function actualizarCantidadLote(cantidadRestar) {
     $("#lote").selectpicker('refresh');
 }
 
+//resta el stock desde el front
+function actualizarCantidadArticulo(cantidadRestar) {
+    const $articulo = $("#articulo").find(':selected');
+    const cant_stock = parseFloat($articulo.attr('cantidad')) || 0;
+    const cant_restar_parse = parseFloat(cantidadRestar) || 0;
+    const lote_content = $articulo.attr('lote_content') === "Y" ? "TIENE LOTE" : "SIN LOTE";
+    const itemcode = $articulo.val();
+
+    // Restamos la cantidad y actualizamos el atributo 'cantidad'
+    const nuevoStock = cant_stock - cant_restar_parse;
+    $articulo.attr('cantidad', nuevoStock);
+
+    // Formateamos el texto del <option>
+    const articulo = $articulo.attr('name');
+    $articulo.text(`${itemcode} | ${articulo} | Stock Total: ${nuevoStock} | ${lote_content}`);
+
+    // Refrescamos el select para reflejar los cambios
+    $("#articulo").selectpicker('refresh');
+}
+
+
 /*con esta funcion ejecutamos el crud para luego agregar una nueva fila en la grilla*/
 function agregarBidonGrilla() {
     let tipo = $("#tipo_mov").val(),
@@ -364,7 +415,7 @@ function agregarBidonGrilla() {
             pres_unica = $("#articulo").find(':selected').attr('pres_unica'),
             lote_content = $("#articulo").find(':selected').attr('lote_content'),
             cod_barra = $("#cod_barra").val(),
-            lote = $("#lote").find(':selected').attr('name');
+            lote = $("#lote").find(':selected').attr('name') || "";
 
     // Separar el valor de la fecha (dd/mm/aaaa) en día, mes y año
     let partesFecha = f_dev.split("/");
@@ -386,7 +437,7 @@ function agregarBidonGrilla() {
             toastr.error("Debe seleccionar un lote para el art&iacute;culo " + name_art, "Error");
             return;
         }
-    } else if (pres_unica == 0) {
+    } else if (pres_unica == 0 && lote_content === "Y") {
         let cant_unitaria = parseFloat($("#cant_unit").val());
         let cant_val = $("#cant_unit").val();
         let cant_stock = parseFloat($("#lote").find(':selected').attr('cantidad')) || 0; // Convertir a número, si es NaN, usar 0
@@ -405,18 +456,40 @@ function agregarBidonGrilla() {
         } else {
             cantidad = cant_unitaria; // Guardar la cantidad unitaria válida
         }
+    } else if (pres_unica == 0 && lote_content === "N") {
+        let cant_unitaria = parseFloat($("#cant_unit").val());
+        let cant_val = $("#cant_unit").val();
+        let cant_stock = parseFloat($("#articulo").find(':selected').attr('cantidad')) || 0; // Convertir a número, si es NaN, usar 0
+        let u_medida = $("#pres").find(':selected').attr('u_medida');
+
+        if (isEmpty(cant_val)) {
+            toastr.error("Debe completar la cantidad para insertar el art&iacute;culo " + name_art, "Error");
+            return;
+        }
+        // Comparar los números correctamente
+        if (cant_unitaria > cant_stock) {
+            toastr.warning("El stock disponible es de: " + cant_stock + " " + u_medida, "Advertencia:");
+            toastr.error("La cantidad ingresada es mayor al stock disponible", "Error:");
+            $("#cod_barra").val(""); // Limpiar el input de código de barra
+            return;
+        } else {
+            cantidad = cant_unitaria; // Guardar la cantidad unitaria válida
+        }
     }
     const table = $("#tabla-bidones").DataTable();
     //aca verificamos si existe el codigo de barras en la grilla sin consultar la base de datos 
-    var codBarExists = table.column(5).data().toArray().includes(cod_barra);
-    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art, ot)) {
+//    var codBarExists = table.column(5).data().toArray().includes(cod_barra);
+//    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art, ot)) {
+    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_art, ot)) {
 //    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_art, ot)) {
         toastr.error("Todos los campos deben estar completos", "Error");
         return;
-    } else if (codBarExists) {
-        toastr.error("El c&oacute;digo de barra ya existe", "Error");
-        $("#cod_barra").val("");
-    } else {
+    }
+//    else if (codBarExists) {
+//        toastr.error("El c&oacute;digo de barra ya existe", "Error");
+//        $("#cod_barra").val("");
+//    } 
+    else {
         $("#btnConfirBidon").prop("disabled", true);// Desactivar el botón
         $.ajax({
             type: 'post',
@@ -456,10 +529,13 @@ function agregarBidonGrilla() {
                             lote
                             );
                     toastr.success(res.mensaje, "El bid&oacute;n " + res.id);
-                    //restamos desde el front
-                    actualizarCantidadLote(cantidad);
-//                    //restamos desde el back
-//                    traerLoteArticulo(cod_art);
+                    //restamos desde el front                                  
+                    if (pres_unica == 0 && lote_content === "Y") {
+                        actualizarCantidadLote(cantidad);
+                        actualizarCantidadArticulo(cantidad);
+                    } else if (pres_unica == 0 && lote_content === "N") {
+                        actualizarCantidadArticulo(cantidad);
+                    }
                 } else if (res.tipo === 2) {
                     $.ajax({
                         type: "post",
@@ -986,30 +1062,76 @@ function sumarCantidadLote(distNumber, cantidadSumar) {
     $("#lote").selectpicker('refresh');
 }
 
+function sumarCantidadArticulo(itemcode, cantidadSumar) {
+    // Busca el <option> con el atributo 'name' igual al distNumber proporcionado
+    let $articulo = $("#articulo").find(`option[value="${itemcode}"]`);
+    let lote_content = $articulo.attr('lote_content') === "Y" ? "TIENE LOTE" : "SIN LOTE";
+    // Verifica si la opción existe
+    if ($articulo.length === 0) {
+        console.log("No se encontró una opción con itemcode:", itemcode);
+        return;
+    }
+    // Extrae el stock actual y el nombre del artículo
+    let cant_stock = parseFloat($articulo.attr('cantidad')) || 0;
+    // Suma la cantidad al stock actual
+    let nuevoStock = cant_stock + cantidadSumar;
+    // Actualiza el atributo 'cantidad' con el nuevo valor
+    $articulo.attr('cantidad', nuevoStock);
+    // Actualiza el texto visible en el <option> correspondiente
+    let itemname = $articulo.attr('name');
+    $articulo.text(`${itemcode} | ${itemname} | Stock Total: ${nuevoStock} | ${lote_content}`);
+    // Refresca el select para que los cambios se reflejen
+    $("#articulo").selectpicker('refresh');
+}
 
 
 /*con esta función ejecutamos un crud para borrar la fila luego de hacer click en el boton deshacer
  * si tiene exito remueve la fila*/
 function deshacerCargaBidon(mov_id, cantidad, distnumber) {
-    console.log(mov_id, cantidad, distnumber);
+    const itemcode = $("#articulo").find(':selected').attr('value'); // Guardar el código de artículo actual
+    const selectedLote = $("#lote").find(':selected').attr('value'); // Guardar el lote seleccionado
+    const selectedPres = $("#pres").find(':selected').attr('value'); // Guardar la presentación seleccionada
+
     $.ajax({
         type: "post",
         url: "cruds/control_bidones_itkv/crud_deshacer_bidon.jsp",
         data: {mov_id: mov_id},
-        beforeSend: function () {
-        },
         success: function (res) {
-            if (res.tipo == 1) {
+            if (res.tipo === 1) {
+                // Eliminar fila de la tabla y mostrar mensaje de éxito
                 tablaBidones.row($('#row' + mov_id)).remove().draw();
-                toastr.success(res.mensaje, "mov_id: " + mov_id + " ");
-                sumarCantidadLote(distnumber, cantidad);
-//                sumarCantidadLote(cantidad);
+                toastr.success(res.mensaje, "mov_id: " + mov_id);
+
+                // Recargar el select de artículos
+                traerSelectArticulo().then(() => {
+                    // Asignar y refrescar el último artículo seleccionado
+                    $("#articulo").val(itemcode).selectpicker('refresh');
+
+                    // Llamar a handleArticuloChange y esperar a que termine
+                    Promise.resolve(handleArticuloChange($("#articulo")[0])).then(() => {
+
+                        // Esperar a que los selects #lote y #pres se recarguen y asignar los valores guardados
+                        traerLoteArticulo(itemcode).then(() => {
+                            $("#lote").val(selectedLote).selectpicker('refresh');
+                        });
+
+                        traerSelectPresentacion(itemcode).then(() => {
+                            $("#pres").val(selectedPres).selectpicker('refresh');
+                        });
+                    });
+                });
             } else {
-                toastr.error(res.mensaje, "Error: ");
+                toastr.error(res.mensaje, "Error");
             }
+        },
+        error: function (err) {
+            toastr.error("Error en la operación", "Error");
+            console.error(err);
         }
     });
 }
+
+
 
 function confirmarMovBidonV1() {
 //    let responsable = $("#responsable").val();

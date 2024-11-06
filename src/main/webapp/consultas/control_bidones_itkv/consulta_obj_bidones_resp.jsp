@@ -23,18 +23,18 @@
                     + "left outer join cmb_presentacion pr "
                     + "on rm.rmov_pre_id = pr.pre_id "
                     + "left outer join loteOITM lo "
-                    + "on"
-                    + "rm.rmov_itemCode = lo.ItemCode"
+                    + "on "
+                    + "rm.rmov_itemCode = lo.ItemCode "
                     + "where rm.rmov_estado = '" + estado + "' "
                     + "and (rm.rmov_cantR = 0 or rm.rmov_cantR is null)";
         } else {
             query = "select * "
                     + " from cmb_registro_movimientos rm  "
-                    + " left outer join cmb_presentacion pr"
+                    + " left outer join cmb_presentacion pr "
                     + " on rm.rmov_pre_id = pr.pre_id "
                     + " left outer join loteOITM lo "
-                    + " on"
-                    + " rm.rmov_itemCode = lo.ItemCode and rm.rmov_DistNumber = lo.DistNumber"
+                    + " on "
+                    + " rm.rmov_itemCode = lo.ItemCode and rm.rmov_DistNumber = lo.DistNumber "
                     + " where rm.rmov_res_id = " + res_id + " and rm.rmov_estado = '" + estado + "'";
         }
 
