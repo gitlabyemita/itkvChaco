@@ -479,8 +479,7 @@ function agregarBidonGrilla() {
     const table = $("#tabla-bidones").DataTable();
     //aca verificamos si existe el codigo de barras en la grilla sin consultar la base de datos 
 //    var codBarExists = table.column(5).data().toArray().includes(cod_barra);
-//    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art, ot)) {
-    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_art, ot)) {
+    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_barra, cod_art, ot)) {
 //    if (isEmpty(id_resp, resp, f_dev, name_art, pres, cod_art, ot)) {
         toastr.error("Todos los campos deben estar completos", "Error");
         return;
