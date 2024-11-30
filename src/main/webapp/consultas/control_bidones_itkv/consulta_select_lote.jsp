@@ -16,33 +16,7 @@
 
     try {
         String cod_art = request.getParameter("cod_art");
-        String query = "SELECT  "
-                            + " ISNULL(o.FrgnName, o.ItemName) AS ItemName, "
-                            + " o.ItemName AS ItemName, "
-                            + " lo.itemcode AS itemcode, "
-                            + " lo.sysnumber AS sysnumber, "
-                            + " lo.WhsCode AS WhsCode, "
-                            + " lo.DistNumber AS DistNumber,"
-                            + " lo.Quantity AS OriginalQuantity,"
-                            + " lo.Quantity - COALESCE(SUM(rm.rmov_cantidad), 0) AS StockRemaining"
-                        + " FROM "
-                             + " loteOITM lo "
-                        + " LEFT JOIN "
-                             + " oitm o ON lo.itemcode = o.itemcode"
-                        + " LEFT JOIN "
-                            + " cmb_registro_movimientos rm ON lo.itemcode = rm.rmov_itemCode "
-                            + " AND lo.DistNumber = rm.rmov_DistNumber "
-                            + " AND rm.rmov_estado = 'P'"
-                        + " WHERE "
-                            + " lo.itemcode = '" + cod_art + "'"
-                        + " GROUP BY "
-                            + "  ISNULL(o.FrgnName, o.ItemName), "
-                            + "  o.ItemName, "
-                            + "  lo.itemcode, "
-                            + "  lo.sysnumber, "
-                            + "  lo.WhsCode, "
-                            + "  lo.DistNumber, "
-                            + "  lo.Quantity; ";
+        String query = "select * from v_stock_articulos_lotes_bidones where itemcode = '" + cod_art + "'";
 
         ResultSet rs;
         Statement st = connection.createStatement();
