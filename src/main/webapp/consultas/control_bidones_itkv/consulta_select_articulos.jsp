@@ -15,7 +15,8 @@
     JSONArray articulos = new JSONArray();
 
     try {
-        String query = "select * from OITM where QryGroup5= 'Y'";
+//        String query = "select * from OITM where QryGroup5= 'Y'";
+        String query = "select * from v_stock_articulos_bidones";
 
         ResultSet rs;
         Statement st = connection.createStatement();
@@ -30,6 +31,7 @@
             articulo.put("lote_content", rs.getString("ManBtchNum"));
             articulo.put("factor_multip", rs.getString("NumInCnt"));
             articulo.put("name_factor_multip", rs.getString("CntUnitMsr"));
+            articulo.put("OnHand", rs.getString("StockRemaining"));
 
             articulos.put(articulo);
         }
