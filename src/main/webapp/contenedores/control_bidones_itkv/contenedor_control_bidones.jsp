@@ -20,6 +20,32 @@
     String query = "select * FROM [dbo].[cmb_tipo_movimiento]";
     String query2 = "select * from itkv_personales";
     String query3 = "select * from OITM where QryGroup5= 'Y'";
+//    String query3 = "SELECT  "
+//            + " ISNULL(o.FrgnName, o.ItemName) AS ItemName, "
+//            + " o.ItemName AS ItemName, "
+//            + " o.itemcode AS itemcode, "
+//            + " o.OnHand AS OriginalQuantity,"
+//            + " o.OnHand - COALESCE(SUM(rm.rmov_cantidad), 0) AS StockRemaining,"
+//            + " o.U_pres_unica,"
+//            + " o.ManBtchNum,"
+//            + " o.NumInCnt,"
+//            + " o.InvntryUom"
+//            + " FROM  "
+//            + " oitm o"
+//            + " LEFT JOIN "
+//            + " cmb_registro_movimientos rm ON o.itemcode = rm.rmov_itemCode "
+//            + " AND rm.rmov_estado = 'P'"
+//            + " WHERE "
+//            + " o.QryGroup5= 'Y'"
+//            + " GROUP BY "
+//            + " ISNULL(o.FrgnName, o.ItemName), "
+//            + " o.ItemName, "
+//            + " o.itemcode,"
+//            + " o.OnHand "
+//            + " o.U_pres_unica,"
+//            + " o.ManBtchNum,"
+//            + " o.NumInCnt,"
+//            + " o.InvntryUom";
     rsTM = st.executeQuery(query);
     rsRes = st1.executeQuery(query2);
     rsArt = st3.executeQuery(query3);
@@ -120,10 +146,7 @@
                         <div class="form-group">
                             <label for="articulo">Artículo</label>
                             <select id="articulo" name="articulo" data-live-search="true" class="form-control form-control-sm selectpicker" onchange="handleArticuloChange(this)">   
-                                <option value="">Seleccione artículo</option>                              
-                                <%while (rsArt.next()) {%>
-                                <option value="<%=rsArt.getString("ItemCode")%>" name="<%=rsArt.getString("ItemName")%>" pres_unica="<%=rsArt.getString("U_pres_unica")%>" lote_content="<%=rsArt.getString("ManBtchNum")%>" factor_multip="<%=rsArt.getString("NumInCnt")%>" name_factor_multip="<%=rsArt.getString("CntUnitMsr")%>"><%=rsArt.getString("ItemCode")%> - <%=rsArt.getString("ItemName")%></option>             
-                                <%}%>
+                                <option value="">Seleccione artículo</option>        
                             </select>
                         </div>
                     </div>
