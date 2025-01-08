@@ -147,7 +147,7 @@
         </table>    
 
     <div class="modal-footer align-right " >
-        <input  class="btn bg-danger"  type="submit"   value="REGISTRAR" >
+        <input  class="btn bg-danger"  type="submit"   value="REGISTRAR" > 
          
  
 
