@@ -9,7 +9,7 @@
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
 	<queryString>
-		<![CDATA[select * from itkv_salida1 where id=$P{id}]]>
+		<![CDATA[select * from grupomaehara.dbo.itkv_salida1 where id=$P{id}]]>
 	</queryString>
 	<field name="id" class="java.lang.Integer"/>
 	<field name="fecha" class="java.sql.Timestamp"/>
@@ -36,6 +36,12 @@
 	<field name="id_boca_destino" class="java.lang.String"/>
 	<field name="desc_boca_destino" class="java.lang.String"/>
 	<field name="ubicacion" class="java.lang.String"/>
+	<field name="tanque_lleno" class="java.lang.String"/>
+	<field name="actividad_id" class="java.lang.String"/>
+	<field name="actividad_desc" class="java.lang.String"/>
+	<field name="rubro_id" class="java.lang.String"/>
+	<field name="rubro_desc" class="java.lang.String"/>
+	<field name="UPDATE_DATE" class="java.sql.Timestamp"/>
 	<title>
 		<band height="249" splitType="Stretch">
 			<line>
@@ -93,9 +99,9 @@
 				<text><![CDATA[Nro.:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="103" y="42" width="63" height="33" uuid="ca504600-82a8-4006-bf87-c0ee165ebe28"/>
+				<reportElement x="103" y="46" width="63" height="33" uuid="ca504600-82a8-4006-bf87-c0ee165ebe28"/>
 				<textElement>
-					<font fontName="Times New Roman" size="22" isBold="true"/>
+					<font fontName="Times New Roman" size="18" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
 			</textField>
