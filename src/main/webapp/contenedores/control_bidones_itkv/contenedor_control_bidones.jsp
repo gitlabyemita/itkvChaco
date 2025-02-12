@@ -66,10 +66,10 @@
 
 
 <button id="btnAgregarBidon" class="btn btn-success btn-lg " onclick="ejecutarJob('Sincronizador Chaco a Asu');">
-    <i class="fa-solid fa-plus"></i> CHACO - ASU
+    <i class="fa-solid fa-plus"></i> EXPORTAR
 </button>
 <button id="btnAgregarBidon" class="btn btn-primary btn-lg" onclick="ejecutarJob('ENVIO DE DM AL CHACO');">
-    <i class="fa-solid fa-plus"></i> ASU - CHACO
+    <i class="fa-solid fa-plus"></i> IMPORTAR
 </button>
 <!--                            <button id="btnAgregarBidon" class="btn btn-danger btn-lg " onclick="ejecutarJobSap();">
                                 <i class="fa-solid fa-plus"></i> SAP
