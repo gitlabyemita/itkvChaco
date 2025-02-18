@@ -10,8 +10,16 @@
 <%@include  file="../../chequearsesion.jsp" %>
 <%@include  file="../../cruds/conexion.jsp" %> 
 
-<%    PreparedStatement ps, ps2, ps3, ps4, ps5, ps6,ps7;
+<%    
+    PreparedStatement ps, ps2, ps3, ps4, ps5, ps6,ps7;
     ResultSet rs, rsActivo, rsUbicacion, rsActividad, rsRubro, rs6,rsRepuesto;
+    String sector = (String) sesionOk.getAttribute("clasificadora");
+    
+    String area="DEP_TAL";
+    
+    if(sector.equals("AGR")){ 
+        area="TAL_AGR";
+    }
     try {
         ps = connection.prepareStatement(" SELECT DISTINCT T0.[U_retiradopor] as U_retiradopor              FROM    IGE1 T0");// 3
         rs = ps.executeQuery();
@@ -28,11 +36,11 @@
         ps5 = connection.prepareStatement(" SELECT T0.[PrcCode], T0.[PrcName], T0.[U_CodAnt], T0.[U_Comen]  FROM    OPRC T0 WHERE T0.[DimCode] =  1");// ACTIVIDAD
         rsRubro = ps5.executeQuery();
         
-        ps6 = connection.prepareStatement(" SELECT T0.[WhsCode], T0.[WhsName]                               FROM    OWHS T0 WHERE T0.[WhsCode]  like 'TAN%%'OR  T0.[WhsCode]  = 'DEP_GEN'OR  T0.[WhsCode]  = 'DEP_TAL' ");// ACTIVIDAD
+        ps6 = connection.prepareStatement(" SELECT T0.[WhsCode], T0.[WhsName] FROM    OWHS T0 WHERE T0.[WhsCode]  like 'TAN%%'OR  T0.[WhsCode]  = 'DEP_GEN'OR  T0.[WhsCode]  = 'DEP_TAL' ");// ACTIVIDAD
         rs6 = ps6.executeQuery();
  
 
-        ps7 = connection.prepareStatement(" SELECT ItemCode , ItemName  , ItmsGrpCod , OnHand , InvntryUom  FROM  oitm	 where    QryGroup3='Y'   ");// ACTIVIDAD
+        ps7 = connection.prepareStatement(" SELECT ItemCode,ItemName,ItmsGrpCod,OnHand,InvntryUom FROM V_OITM where QryGroup3='Y' and WhsCode='"+area+"' ");// ACTIVIDAD
         rsRepuesto = ps7.executeQuery();
   
     

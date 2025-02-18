@@ -205,7 +205,7 @@ function ir_salida_repuesto_itkv()
                         }
             });
             eliminar_fila_repuesto_itkv();
-            
+
             asignar_rol_agricultura_select(); //seleccionamos el option agricultura de acuerdo al rol
 
             cerrar_load();
@@ -507,9 +507,6 @@ function registrar_salida1_itkv() {
         var id_tipo_combustible = $("#tipo_combus").find(':selected').attr('value');
         var tipo_combustible = $("#tipo_combus").find(':selected').attr('desc');
 
-
-
-
         Swal.fire({
             title: 'CONFIRMACION',
             text: "DESEA GENERAR EL DOCUMENTO?",
@@ -569,49 +566,54 @@ function registrar_salida1_itkv() {
 
                         if (res.tipo_respuesta > 0)
                         {
-                            var fileInput = $('#imagenInput')[0].files[0];
+                            var fileInput = $('#imagenInput')[0].files[0]; // Obtener el archivo seleccionado
                             var quality = 0.5; // Calidad de compresión (rango: 0-1)
                             var nombreImagen = res.tipo_respuesta + ".jpg"; // Nombre de la imagen
 
-                            // Comprimir la imagen utilizando compressor.js
+
+// Comprimir la imagen utilizando Compressor.js
                             new Compressor(fileInput, {
-                                quality: quality,
-                                maxWidth: 800,
+                                quality: quality, // Configurar la calidad de compresión
+                                maxWidth: 800, // Redimensionar a un ancho máximo de 800 píxeles
                                 success: function (result) {
-                                    // Crear un objeto FormData para enviar la imagen comprimida al servidor
+                                    // Crear un objeto FormData para enviar la imagen comprimida
                                     var formData = new FormData();
-                                    formData.append('image', result); // Imagen comprimida
+                                    formData.append('image', result); // Adjuntar la imagen comprimida
+                                    formData.append('fileName', nombreImagen); // Adjuntar el nombre de la imagen
 
                                     // Enviar la imagen comprimida al servidor utilizando AJAX
                                     $.ajax({
-                                        url: 'http://192.168.55.140:8000/subirImagen',
+                                        url: 'http://192.168.55.140:5072/api/ImageUpload/upload', // Ruta de la API
                                         type: 'POST',
                                         data: formData,
-                                        contentType: false,
-                                        processData: false,
-                                        headers: {
-                                            // Especificar el nombre de la imagen en el encabezado de la solicitud
-                                            'Nombre-Imagen': nombreImagen
-                                        },
+                                        contentType: false, // No establecer encabezado de tipo de contenido
+                                        processData: false, // No procesar datos automáticamente
                                         success: function (response) {
-                                            // console.log(response);
+                                            console.log('Imagen subida con éxito:', response);
+                                            // Mostrar mensaje de éxito
                                             aviso_generico(1, "REGISTRADO CON EXITO.");
                                             ir_consumo_combustible_itkv();
+
                                         },
                                         error: function (xhr, status, error) {
-                                            //console.error(error);
-                                            // alert('Error al subir la imagen');
-                                            aviso_generico(1, "REGISTRADO CON EXITO.");
+                                            console.error('Error al subir la imagen:', error);
+                                            aviso_generico(0, "No se pudo subir la imagen. Intenta nuevamente.");
                                             ir_consumo_combustible_itkv();
+
                                         }
                                     });
                                 },
                                 error: function (error) {
                                     console.error('Error al comprimir la imagen:', error);
-                                    alert('Error al comprimir la imagen');
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: 'Ocurrió un error al comprimir la imagen. Intenta nuevamente.'
+                                    });
+                                    ir_consumo_combustible_itkv();
                                 }
                             });
-                            //  
+
                         }
                     }
                 });
@@ -623,10 +625,6 @@ function registrar_salida1_itkv() {
 
     }
 }
-
-
-
-
 
 function registrar_salida2_itkv() {
 
@@ -642,12 +640,6 @@ function registrar_salida2_itkv() {
     var lt_total = $("#lt_total").val();
     var id_tipo_combustible = $("#tipo_combus").find(':selected').attr('value');
     var tipo_combustible = $("#tipo_combus").find(':selected').attr('desc');
-
-
-
-
-
-
 
     Swal.fire({
         title: 'CONFIRMACION',
@@ -1160,7 +1152,7 @@ function asignar_rol_agricultura_select() {
                 $("#rubro").selectpicker('refresh');
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error en la consulta:", xhr.responseText);
         }
     });
@@ -1353,10 +1345,11 @@ function registrar_consumo_balanceados_itkv() {
 
 function cuadroImagenItkv(id) {
 
+    const apiUrl = 'http://192.168.55.140:5072/api/ImageDownload/get?fileName=' + id + '.jpg';
 
 // Realizar una solicitud AJAX a la ruta de la imagen
     $.ajax({
-        url: 'http://192.168.55.140:8000/imagen?nombreImagen=' + id,
+        url: apiUrl,
         method: 'GET',
         xhrFields: {
             responseType: 'blob' // Esperamos una respuesta de tipo Blob (imagen)
