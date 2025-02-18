@@ -16,7 +16,7 @@
 
     try {
 //        String query = "select * from OITM where QryGroup5= 'Y'";
-        String query = "select * from v_stock_articulos_bidones";
+        String query = "select * from v_stock_articulos_bidones where WhsCode = 'DEP_AGR'";
 
         ResultSet rs;
         Statement st = connection.createStatement();

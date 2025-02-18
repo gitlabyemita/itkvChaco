@@ -60,6 +60,8 @@ function irControlMovimientosBidones() {
             cargar_estilo_calendario_global("dd/mm/yyyy");
 
             traerSelectArticulo();
+            
+            loadTransferHistory();
         }
     });
 }
@@ -1214,27 +1216,39 @@ function confirmarMovBidon() {
     let responsable = $("#responsable").val();
     let resp_entrega = $("#resp_entrega").val();
     let resp_entrega_name = $("#resp_entrega").find(':selected').attr('name');
+    let resp_recepcion_name = $("#responsable").find(':selected').attr('name');
     let estado = $("#tipo_mov").find(':selected').attr('estado');
     let tipo = $("#tipo_mov").find(':selected').attr('name');
     let ids = [];
     let data_ajax = {};
     let link = "";
+    let tableData = []; // Array para almacenar los datos de la tabla
 
-    // Verificar si se seleccionó responsable para el estado "D"
     if (resp_entrega === "" && estado === "D") {
         toastr.warning("Debe seleccionar responsable a entregar bidones", "Advertencia");
         return;
     }
 
-    // Recorrer las filas de la tabla y obtener los mov_id
+    // Recorrer la tabla y almacenar los datos necesarios
     tablaBidones.rows().every(function () {
         let $row = $(this.node());
         let checkbox = $row.find('input[type="checkbox"]');
         let data = this.data();
 
-        // Si es estado "E" o si el checkbox está marcado (para "R" y "D")
         if (estado === "E" || (estado !== "E" && checkbox.is(':checked'))) {
-            ids.push(data[2]);  // posición mov_id
+            ids.push(data[2]);
+
+            // Almacenar los datos necesarios para el PDF
+            if (estado === "E") {
+                tableData.push({
+                    id_mov: data[2],
+                    cant_entre: data[4],
+                    cod_barra: data[5],
+                    f_dev: data[7],
+                    nombre: data[8],
+                    distnumber: data[9]
+                });
+            }
         }
     });
 
@@ -1270,13 +1284,32 @@ function confirmarMovBidon() {
                     type: 'post',
                     url: link,
                     data: data_ajax,
+                    beforeSend: function () {
+                        // Los datos ya están almacenados en tableData
+                    },
                     success: function (res) {
                         if (res.tipo === 1) {
                             if (estado === "E") {
-                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa mod: E");
-                                clearTable();
-                                $("#btnConfirBidon").prop("disabled", true);
-                                resetForm();
+                                const transferData = {
+                                    mensaje: res.mensaje,
+                                    responsable: resp_recepcion_name,
+                                    estado: estado,
+                                    tableData: tableData,
+                                    fecha: new Date().toISOString()
+                                };
+                                // Guardar en el historial
+                                saveToHistory(transferData);
+                                try {
+                                    generatePDF(res.mensaje, resp_recepcion_name, estado, tableData);
+                                    toastr.success(res.mensaje, "Actualización exitosa mod: E");
+                                } catch (error) {
+                                    toastr.error("Error al generar el PDF. Puede regenerarlo desde el historial", "Error");
+                                }
+                                setTimeout(() => {
+                                    clearTable();
+                                    $("#btnConfirBidon").prop("disabled", true);
+                                    resetForm();
+                                }, 2000);
                             } else {
                                 traerGrillaBidones(estado === "R" ? responsable : "TODOS");
                                 toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa mod: " + estado);
@@ -1299,6 +1332,114 @@ function confirmarMovBidon() {
     }
 }
 
+function generatePDF(mensaje, responsable, estado, tableData) {
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [80, 297]
+    });
+
+    let yPosition = 10;
+    const lineHeight = 5;
+    const startX = 5;
+    const maxWidth = 70;
+
+    const centerText = (text, y) => {
+        const textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+        const x = (80 - textWidth) / 2;
+        doc.text(text, x, y);
+    };
+
+    const addDivider = (y) => {
+        doc.setLineWidth(0.1);
+        doc.line(startX, y, 75, y);
+        return y + lineHeight;
+    };
+
+    // Encabezado del ticket
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    centerText('CONTROL DE BIDONES', yPosition);
+    yPosition += lineHeight * 1.5;
+
+    // Fecha y hora
+    doc.setFontSize(8);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString();
+    const timeStr = now.toLocaleTimeString();
+    centerText(`Fecha: ${dateStr} ${timeStr}`, yPosition);
+    yPosition += lineHeight * 1.5;
+
+    // Información del responsable
+    doc.setFont(undefined, 'normal');
+    doc.text(`Responsable: ${responsable}`, startX, yPosition);
+    yPosition += lineHeight * 1.5;
+
+    // Agregar divisor
+    yPosition = addDivider(yPosition);
+
+    // Encabezado de detalles
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'bold');
+    doc.text('ID', startX, yPosition);
+    doc.text('CANT', startX + 10, yPosition);
+    doc.text('COD', startX + 20, yPosition);
+    doc.text('FECHA', startX + 35, yPosition);
+    doc.text('DIST', startX + 55, yPosition);
+    yPosition += lineHeight;
+
+    // Detalles de los items
+    doc.setFont(undefined, 'normal');
+    tableData.forEach(row => {
+        if (yPosition > 287) {
+            doc.addPage();
+            yPosition = 10;
+        }
+
+        doc.text(String(row.id_mov), startX, yPosition);
+        doc.text(String(row.cant_entre), startX + 10, yPosition);
+        doc.text(String(row.cod_barra), startX + 20, yPosition);
+        doc.text(String(row.f_dev), startX + 35, yPosition);
+        doc.text(String(row.distnumber), startX + 55, yPosition);
+        yPosition += lineHeight;
+    });
+
+    // Agregar divisor final
+    yPosition = addDivider(yPosition);
+    yPosition += lineHeight;
+
+    // Agregar mensaje
+    doc.setFontSize(8);
+    const mensajeLines = doc.splitTextToSize(mensaje, maxWidth);
+    doc.text(mensajeLines, startX, yPosition);
+    yPosition += (lineHeight * mensajeLines.length) + lineHeight * 2;
+
+    // Espacio para firmas
+    doc.setFontSize(7);
+
+    // Firma de entrega
+    doc.line(startX + 5, yPosition + 15, startX + 30, yPosition + 15); // Línea para firma entrega
+    doc.text('Entregado por:', startX + 8, yPosition + 18);
+    doc.setFontSize(6);
+    doc.text('Firma y CI', startX + 10, yPosition + 21);
+
+    // Firma de recepción
+    doc.setFontSize(7);
+    doc.line(startX + 40, yPosition + 15, startX + 65, yPosition + 15); // Línea para firma recepción
+    doc.text('Recibido por:', startX + 45, yPosition + 18);
+    doc.setFontSize(6);
+    doc.text('Firma y CI', startX + 47, yPosition + 21);
+
+    yPosition += lineHeight * 5;
+
+    // Pie de página
+    doc.setFontSize(7);
+    centerText('-- Fin del documento --', yPosition);
+
+    // Generar y guardar el PDF
+    doc.save(`Ticket_${responsable}_${dateStr.replace(/\//g, '-')}.pdf`);
+}
 
 // Función para manejar el escaneo o ingreso manual del código de barras
 function escanCodBarReasig(mov_id, inputElement) {
@@ -1715,6 +1856,216 @@ function generarReporteBidones() {
             } else {
                 $("#div_cont_inf_bidones").hide();
             }
+        }
+    });
+}
+
+function ejecutarJob(job) {
+    $.ajax({
+        url: "cruds/control_bidones_itkv/crud_job_asu_chaco.jsp",
+        type: 'POST',
+        data: {job: job},
+        beforeSend: function () {
+            Swal.fire({
+                title: 'Procesando...',
+                html: 'Por favor espere mientras se completa la operaci&oacute;n',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        },
+        success: function (data) {
+            if (data.tipo == 1) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Completado',
+                    html: data.mensaje
+                });
+            } else if (data.tipo == 2) {
+                Swal.fire({
+                    title: 'En Proceso',
+                    html: data.mensaje,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                // Opcional: hacer polling para verificar cuando termine
+                checkJobStatus(job);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    html: data.mensaje
+                });
+            }
+        },
+        error: function () {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                html: 'Error al comunicarse con el servidor'
+            });
+        }
+    });
+}
+
+function checkJobStatus(jobName) {
+    var job = jobName;
+    $.ajax({
+        url: 'consultas/control_bidones_itkv/check_job_status_asu_chaco.jsp',
+        type: 'POST',
+        data: {job: job},
+        success: function (data) {
+            if (data.tipo === 1) {
+                // Job completado exitosamente
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Completado',
+                    html: data.mensaje
+                });
+            } else if (data.tipo === 2) {
+                // El job sigue en ejecución, hacer polling nuevamente
+                Swal.fire({
+                    title: 'En Proceso',
+                    html: 'El job contin&uacute;a en ejecuci&oacute;n...',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                // Verificar nuevamente en 5 segundos
+                setTimeout(() => checkJobStatus(jobName), 5000);
+            } else {
+                // Error en la ejecución
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    html: data.mensaje
+                });
+            }
+        },
+        error: function () {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                html: 'Error al verificar el estado del job'
+            });
+        }
+    });
+}
+
+/*REIMPRESION TICKETS*/
+/// Variable global para almacenar el historial de transferencias
+let transferHistory = [];
+const MAX_HISTORY = 5;
+
+// Función para cargar el historial al iniciar la página
+function loadTransferHistory() {
+    const storedHistory = localStorage.getItem('transferHistory');
+    if (storedHistory) {
+        transferHistory = JSON.parse(storedHistory);
+        updateHistoryBadge();
+    }
+}
+
+// Función para guardar una nueva transferencia en el historial
+function saveToHistory(transferData) {
+    // Agregar la nueva transferencia al inicio del array
+    transferHistory.unshift({
+        ...transferData,
+        id: Date.now() // Identificador único para cada transferencia
+    });
+
+    // Mantener solo las últimas 5 transferencias
+    if (transferHistory.length > MAX_HISTORY) {
+        transferHistory = transferHistory.slice(0, MAX_HISTORY);
+    }
+
+    // Guardar en localStorage
+    localStorage.setItem('transferHistory', JSON.stringify(transferHistory));
+    updateHistoryBadge();
+}
+
+// Función para actualizar el badge del botón de historial
+function updateHistoryBadge() {
+    const count = transferHistory.length;
+    $("#historyBadge").text(count);
+    $("#historyBtn").prop("disabled", count === 0);
+}
+
+// Función para mostrar el modal con el historial
+function showHistoryModal() {
+    // Limpiar el contenido actual de la tabla
+    $("#historyTableBody").empty();
+
+    // Llenar la tabla con el historial
+    transferHistory.forEach((transfer, index) => {
+        const date = new Date(transfer.fecha);
+        const row = `
+            <tr>
+                <td>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
+                <td>${transfer.responsable}</td>
+                <td>${transfer.tableData.length}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="regenerarPDFFromHistory(${transfer.id})">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="removeFromHistory(${transfer.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        $("#historyTableBody").append(row);
+    });
+
+    $("#historyModal").modal('show');
+}
+
+// Función para regenerar PDF desde el historial
+function regenerarPDFFromHistory(transferId) {
+    const transfer = transferHistory.find(t => t.id === transferId);
+    if (transfer) {
+        try {
+            generatePDF(
+                    transfer.mensaje,
+                    transfer.responsable,
+                    transfer.estado,
+                    transfer.tableData
+                    );
+            toastr.success("PDF regenerado exitosamente", "Exito");
+        } catch (error) {
+            toastr.error("Error al regenerar el PDF", "Error");
+            console.error("Error al regenerar PDF:", error);
+        }
+    }
+}
+
+// Función para eliminar una transferencia del historial
+function removeFromHistory(transferId) {
+    Swal.fire({
+        title: 'Eliminar registro?',
+        html: "Esta acci&oacute;n no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            transferHistory = transferHistory.filter(t => t.id !== transferId);
+            localStorage.setItem('transferHistory', JSON.stringify(transferHistory));
+            updateHistoryBadge();
+            showHistoryModal(); // Actualizar la vista del modal
+            toastr.success("Registro eliminado del historial");
         }
     });
 }
