@@ -205,7 +205,7 @@ function ir_salida_repuesto_itkv()
                         }
             });
             eliminar_fila_repuesto_itkv();
-            
+
             asignar_rol_agricultura_select(); //seleccionamos el option agricultura de acuerdo al rol
 
             cerrar_load();
@@ -626,10 +626,6 @@ function registrar_salida1_itkv() {
     }
 }
 
-
-
-
-
 function registrar_salida2_itkv() {
 
     var responsable = $("#retirado_por").val();
@@ -644,12 +640,6 @@ function registrar_salida2_itkv() {
     var lt_total = $("#lt_total").val();
     var id_tipo_combustible = $("#tipo_combus").find(':selected').attr('value');
     var tipo_combustible = $("#tipo_combus").find(':selected').attr('desc');
-
-
-
-
-
-
 
     Swal.fire({
         title: 'CONFIRMACION',
@@ -1162,7 +1152,7 @@ function asignar_rol_agricultura_select() {
                 $("#rubro").selectpicker('refresh');
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error en la consulta:", xhr.responseText);
         }
     });
