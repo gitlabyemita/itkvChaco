@@ -405,6 +405,9 @@
             <!--para notificaciones toastr-->
             <script src="js/toastr.min.js" type="text/javascript"></script>
             <!--<script src="js/JSdataTablesV2_1_5.js" type="text/javascript"></script>-->
+            <!--impresiones en pdf transferencia bidones-->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
 
 
 

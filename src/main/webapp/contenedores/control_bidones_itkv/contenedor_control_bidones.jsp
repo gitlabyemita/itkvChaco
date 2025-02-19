@@ -63,6 +63,21 @@
     </div>
 </div> 
 <br>
+
+
+<button id="btnAgregarBidon" class="btn btn-success btn-lg " onclick="ejecutarJob('Sincronizador Chaco a Asu');">
+    <i class="fa-solid fa-plus"></i> EXPORTAR
+</button>
+<button id="btnAgregarBidon" class="btn btn-primary btn-lg" onclick="ejecutarJob('ENVIO DE DM AL CHACO');">
+    <i class="fa-solid fa-plus"></i> IMPORTAR
+</button>
+<!--                            <button id="btnAgregarBidon" class="btn btn-danger btn-lg " onclick="ejecutarJobSap();">
+                                <i class="fa-solid fa-plus"></i> SAP
+                            </button>-->
+<br>
+<br>
+<br>
+
 <div class="col-12">
     <div class="col-12 col-md-12 col-lg-12">
 
@@ -252,8 +267,51 @@
                                 <i class="fa-solid fa-circle-check"></i> CONFIRMAR
                             </button>
                         </div>
+                        <div class="form-group">
+                            <!-- Botón para mostrar el historial -->
+                            <button id="historyBtn" class="btn btn-info elevation-2 form-control" onclick="showHistoryModal()" disabled>
+                                <i class="fas fa-history"></i> REIMPRESIÓN 
+                                <span id="historyBadge" class="badge badge-light">0</span>
+                            </button>
+                        </div>
                     </div>
                 </div>                
+            </div>
+        </div>
+    </div>
+</div>
+                                
+                                <!-- Modal de historial -->
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historyModalLabel">
+                    <i class="fas fa-history"></i> Historial de Transferencias
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>Responsable</th>
+                                <th>Cantidad Items</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- El contenido se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>

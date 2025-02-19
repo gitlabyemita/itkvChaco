@@ -479,14 +479,14 @@ function registrarGastosItkv() {
 }
 
 function registrar_salida1_itkv() {
-
+ 
     if ($("#retirado_por").val() == "") {
         aviso_generico(0, "SELECCIONE RESPONSABLE");
     }
     if ($("#tanqueLleno").val() == "") {
         aviso_generico(0, "SELECCIONE CARGA DE TANQUE");
     } else {
-
+ 
         var responsable = $("#retirado_por").val();
         var id_activo = $("#activo").attr('code');
         var desc_activo = $("#activo").attr('value');
@@ -499,14 +499,15 @@ function registrar_salida1_itkv() {
         var km_ho = $("#km_ho").val();
         var id_boca = $("#boca").find(':selected').attr('value');
         var desc_boca = $("#boca").find(':selected').attr('desc');
-
+ 
         var band = $("#band").val();
         var lt_inicio = $("#lt_inicio").val();
         var lt_fin = $("#lt_fin").val();
         var lt_total = $("#lt_total").val();
         var id_tipo_combustible = $("#tipo_combus").find(':selected').attr('value');
         var tipo_combustible = $("#tipo_combus").find(':selected').attr('desc');
-
+        
+ 
         Swal.fire({
             title: 'CONFIRMACION',
             text: "DESEA GENERAR EL DOCUMENTO?",
@@ -519,12 +520,12 @@ function registrar_salida1_itkv() {
         {
             if (result.value)
             {
-
+ 
                 $.ajax({
                     type: "POST",
                     url: ruta_cruds_itkv + "crud_registrar_salida_combustible.jsp",
                     data: {
-
+ 
                         responsable: responsable,
                         id_activo: id_activo,
                         desc_activo: desc_activo,
@@ -544,7 +545,7 @@ function registrar_salida1_itkv() {
                         tipo_combustible: tipo_combustible,
                         band: band,
                         tanqueLleno: $("#tanqueLleno").val()
-
+ 
                     },
                     beforeSend: function () {
                         Swal.fire({
@@ -563,14 +564,14 @@ function registrar_salida1_itkv() {
                     },
                     success: function (res)
                     {
-
+ 
                         if (res.tipo_respuesta > 0)
                         {
                             var fileInput = $('#imagenInput')[0].files[0]; // Obtener el archivo seleccionado
                             var quality = 0.5; // Calidad de compresión (rango: 0-1)
                             var nombreImagen = res.tipo_respuesta + ".jpg"; // Nombre de la imagen
-
-
+ 
+ 
 // Comprimir la imagen utilizando Compressor.js
                             new Compressor(fileInput, {
                                 quality: quality, // Configurar la calidad de compresión
@@ -580,7 +581,7 @@ function registrar_salida1_itkv() {
                                     var formData = new FormData();
                                     formData.append('image', result); // Adjuntar la imagen comprimida
                                     formData.append('fileName', nombreImagen); // Adjuntar el nombre de la imagen
-
+ 
                                     // Enviar la imagen comprimida al servidor utilizando AJAX
                                     $.ajax({
                                         url: 'http://192.168.55.140:5072/api/ImageUpload/upload', // Ruta de la API
@@ -593,13 +594,13 @@ function registrar_salida1_itkv() {
                                             // Mostrar mensaje de éxito
                                             aviso_generico(1, "REGISTRADO CON EXITO.");
                                             ir_consumo_combustible_itkv();
-
+ 
                                         },
                                         error: function (xhr, status, error) {
                                             console.error('Error al subir la imagen:', error);
                                             aviso_generico(0, "No se pudo subir la imagen. Intenta nuevamente.");
                                             ir_consumo_combustible_itkv();
-
+ 
                                         }
                                     });
                                 },
@@ -613,16 +614,15 @@ function registrar_salida1_itkv() {
                                     ir_consumo_combustible_itkv();
                                 }
                             });
-
+ 
                         }
                     }
                 });
-
-
-
+ 
+ 
             }
         });
-
+ 
     }
 }
 
