@@ -67,26 +67,37 @@ function irControlMovimientosBidones() {
 }
 
 function traerSelectArticulo() {
-    return new Promise((resolve, reject) => {  // Agregamos el return para que efectivamente devuelva la promesa
+    return new Promise((resolve, reject) => {
         $.ajax({
             type: "post",
             url: "consultas/control_bidones_itkv/consulta_select_articulos.jsp",
             success: function (res) {
                 $("#articulo").html(''); // Limpiar el select
 
-                // Verificamos si hay una lista de artículos
                 if (res.articulos && res.articulos.length > 0) {
                     let newOption = "";
 
                     res.articulos.forEach(lote => {
                         let lote_content = lote.lote_content;
-                        if (!lote.pres_unica && !lote.lote_content) {
-                            newOption += `<option disabled value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">Verificar datos | ${lote.art_id} | ${lote.art_name}</option>`;
-                        } else if (lote_content === "Y") {
-                            newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | TIENE LOTE</option>`;
-                        } else {
-                            newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | SIN LOTE</option>`;
-                        }
+                        let presUnica = lote.pres_unica;
+
+                        // Si pres_unica está vacío, nulo o undefined, se marca en rojo y se deshabilita
+                        let presUnicaText = presUnica && presUnica.trim() !== "" ? presUnica : "<span class='text-danger fw-bold'>pres_unica sin definir</span>";
+                        let isDisabled = !presUnica || presUnica.trim() === "" ? "disabled" : "";
+
+                        let optionContent = `
+                            ${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | 
+                            ${lote_content === "Y" ? "TIENE LOTE" : "SIN LOTE"} | Presentaci&oacute;n: ${presUnicaText}
+                        `;
+
+                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" 
+                                         pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" 
+                                         factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" 
+                                         cantidad="${parseFloat(lote.OnHand).toFixed(2)}"
+                                         ${isDisabled}
+                                         data-content="${optionContent}">
+                                      ${optionContent}
+                                      </option>`;
                     });
 
                     $("#articulo").html("<option value=''>Seleccione art&iacute;culo</option>" + newOption);
@@ -96,15 +107,18 @@ function traerSelectArticulo() {
                     $("#articulo").selectpicker('refresh');
                 }
 
-                resolve(); // Llamamos a resolve para indicar que la operación se ha completado
+                resolve(); // Operación completada con éxito
             },
             error: function (err) {
                 console.error("Error al obtener los lotes: ", err);
-                reject(err); // Llamamos a reject si hay un error
+                reject(err);
             }
         });
     });
 }
+
+
+
 
 
 function resetForm() {

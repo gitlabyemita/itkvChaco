@@ -71,6 +71,7 @@
         <link href="css/toastr.min.css" rel="stylesheet" type="text/css"/>
         <link href="css/toastr.css" rel="stylesheet" type="text/css"/>
         <link href="css/app.css" rel="stylesheet" type="text/css"/>
+        <link href="css/bidones.css" rel="stylesheet" type="text/css"/>
 
 
     </head>

@@ -1,0 +1,14 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : 24 feb. 2025, 14:06:43
+    Author     : Administrador
+*/
+
+/* Cambia el cursor a "prohibido" cuando el usuario pasa sobre opciones deshabilitadas */
+.bootstrap-select .dropdown-menu .disabled {
+    cursor: not-allowed !important;
+    color: red !important; /* Asegura que las opciones deshabilitadas se vean bien */
+}
