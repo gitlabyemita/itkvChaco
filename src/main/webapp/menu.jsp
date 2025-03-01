@@ -408,6 +408,11 @@
             <!--<script src="js/JSdataTablesV2_1_5.js" type="text/javascript"></script>-->
             <!--impresiones en pdf transferencia bidones-->
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qz-tray/2.2.1/qz-tray.js"></script>
+
+
 
 
 
