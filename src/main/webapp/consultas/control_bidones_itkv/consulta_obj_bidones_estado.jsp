@@ -20,9 +20,13 @@
         String hasta = request.getParameter("hasta");
         ResultSet rs;
         Statement st = connection.createStatement();
-        rs = st.executeQuery("select * from cmb_registro_movimientos rm left outer join cmb_presentacion pr on rm.rmov_pre_id = pr.pre_id "
-                + "where rm.rmov_estado = '" + estado + "'and ((rmov_DocDate is null) or (rmov_DocDate BETWEEN CONVERT(DATE, '" + desde + "') AND CONVERT(DATE, '" + hasta + "')))");
-
+        rs = st.executeQuery(
+                "SELECT * FROM cmb_registro_movimientos rm "
+                + "LEFT OUTER JOIN cmb_presentacion pr ON rm.rmov_pre_id = pr.pre_id "
+                + "WHERE rm.rmov_estado = '" + estado + "' "
+                + "AND (rmov_DocDate IS NULL OR "
+                + "CAST(rmov_DocDate AS DATE) BETWEEN CONVERT(DATE, '" + desde + "') AND CONVERT(DATE, '" + hasta + "'))"
+        );
         while (rs.next()) {
             JSONObject bidon = new JSONObject();
             bidon.put("codigoBarra", rs.getString("rmov_codeBar1"));
