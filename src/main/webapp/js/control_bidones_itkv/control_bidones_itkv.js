@@ -17,6 +17,11 @@ function irControlMovimientosBidones() {
         success: function (res) {
             cerrar_load();
             $("#contenedor_principal").html(res);
+            $('#fecha_actual').val(new Date().toISOString().split('T')[0]);
+            $('#articulo').on('change', function () {
+                const selectedValue = $(this).val();
+                $('#cod_barra').val(selectedValue);
+            });
             tablaBidones = $("#tabla-bidones").DataTable({
                 destroy: true,
                 lengthMenu: [[10, 25, 50, 100, -1], ["10 registros", "25 registros", "50 registros", "100 registros", "Mostrar todos"]],
@@ -60,33 +65,60 @@ function irControlMovimientosBidones() {
             cargar_estilo_calendario_global("dd/mm/yyyy");
 
             traerSelectArticulo();
-            
+
             loadTransferHistory();
         }
     });
 }
 
 function traerSelectArticulo() {
-    return new Promise((resolve, reject) => {  // Agregamos el return para que efectivamente devuelva la promesa
+    return new Promise((resolve, reject) => {
         $.ajax({
             type: "post",
             url: "consultas/control_bidones_itkv/consulta_select_articulos.jsp",
             success: function (res) {
                 $("#articulo").html(''); // Limpiar el select
 
-                // Verificamos si hay una lista de artículos
                 if (res.articulos && res.articulos.length > 0) {
                     let newOption = "";
 
                     res.articulos.forEach(lote => {
                         let lote_content = lote.lote_content;
-                        if (!lote.pres_unica && !lote.lote_content) {
-                            newOption += `<option disabled value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">Verificar datos | ${lote.art_id} | ${lote.art_name}</option>`;
-                        } else if (lote_content === "Y") {
-                            newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | TIENE LOTE</option>`;
+                        let presUnica = lote.pres_unica ? lote.pres_unica.trim() : "";
+
+                        // Determinar el texto de presentación basado en presUnica
+                        let presUnicaText = "";
+                        if (presUnica === "1") {
+                            presUnicaText = "Control de Insumos";
+                        } else if (presUnica === "0") {
+                            presUnicaText = ""; // No mostrar texto si es "0"
                         } else {
-                            newOption += `<option value="${lote.art_id}" name="${lote.art_name}" pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" cantidad="${parseFloat(lote.OnHand).toFixed(2)}">${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | SIN LOTE</option>`;
+                            presUnicaText = "<span class='text-danger fw-bold'>Definir control de art&iacute;culo</span>";
                         }
+
+                        // Determinar clases según la condición
+                        let isDisabled = presUnica === "" ? "disabled" : "";
+                        let optionClass = presUnica === ""
+                                ? "text-danger fw-bold disabled"  // Si no tiene pres_unica -> rojo y deshabilitado
+                                : presUnica === "1"
+                                ? "text-warning fw-bold"       // Si pres_unica es "1" -> azul
+                                : "";                           // En otros casos, sin clase especial
+
+                        let optionContent = `
+                            ${lote.art_id} | ${lote.art_name} | Stock Total: ${parseFloat(lote.OnHand).toFixed(2)} | 
+                            ${lote_content === "Y" ? "TIENE LOTE" : "SIN LOTE"} 
+                            ${presUnicaText ? "| " + presUnicaText : ""}
+                        `;
+
+                        newOption += `<option value="${lote.art_id}" name="${lote.art_name}" 
+                                         pres_unica="${lote.pres_unica}" lote_content="${lote.lote_content}" 
+                                         factor_multip="${lote.factor_multip}" name_factor_multip="${lote.name_factor_multip}" 
+                                         cantidad="${parseFloat(lote.OnHand).toFixed(2)}"
+                                         ${isDisabled}
+                                         class="${optionClass}"
+                                         data-content="<span class='${optionClass}'>${optionContent}</span>">
+                                      ${optionContent}
+                                      </option>`;
                     });
 
                     $("#articulo").html("<option value=''>Seleccione art&iacute;culo</option>" + newOption);
@@ -96,19 +128,21 @@ function traerSelectArticulo() {
                     $("#articulo").selectpicker('refresh');
                 }
 
-                resolve(); // Llamamos a resolve para indicar que la operación se ha completado
+                resolve(); // Operación completada con éxito
             },
             error: function (err) {
                 console.error("Error al obtener los lotes: ", err);
-                reject(err); // Llamamos a reject si hay un error
+                reject(err);
             }
         });
     });
 }
 
 
-function resetForm() {
-    $("#ot, #dev_estimada, #cant, #bidon, #cod_barra, #cant_unit").val('');
+
+
+function resetFormBidones() {
+    $("#ot, #dev_estimada, #cant, #bidon, #cod_barra, #cant_unit, #comentario").val('');
     $("#articulo, #pres, #responsable, #lote").val('').selectpicker('refresh');
     $("#btnConfirBidon").prop("disabled", true);
 }
@@ -417,6 +451,7 @@ function agregarBidonGrilla() {
             pres_unica = $("#articulo").find(':selected').attr('pres_unica'),
             lote_content = $("#articulo").find(':selected').attr('lote_content'),
             cod_barra = $("#cod_barra").val(),
+            comentario = $("#comentario").val(),
             lote = $("#lote").find(':selected').attr('name') || "";
 
     // Separar el valor de la fecha (dd/mm/aaaa) en día, mes y año
@@ -507,7 +542,8 @@ function agregarBidonGrilla() {
                 cantidad: cantidad,
                 cod_barra: cod_barra,
                 lote: lote,
-                estado: "P"
+                estado: "P",
+                comentario: comentario
             },
             beforeSend: function () {
             },
@@ -519,6 +555,7 @@ function agregarBidonGrilla() {
                             res.id,
                             cod_barra,
                             "",
+                            cod_art,
                             name_art,
                             name_pres,
                             ot,
@@ -527,7 +564,8 @@ function agregarBidonGrilla() {
                             parseFloat(cantidad).toFixed(1),
                             "",
                             res.id,
-                            lote
+                            lote,
+                            comentario
                             );
                     toastr.success(res.mensaje, "El bid&oacute;n " + res.id);
                     //restamos desde el front                                  
@@ -552,6 +590,7 @@ function agregarBidonGrilla() {
                                         fila.mov_id,
                                         fila.codigoBarra,
                                         fila.codigoBarra2,
+                                        fila.itemcode,
                                         fila.nombre,
                                         fila.presentacion,
                                         fila.ot,
@@ -560,7 +599,8 @@ function agregarBidonGrilla() {
                                         fila.cantidadEntregada,
                                         fila.cantidadRecibida,
                                         fila.mov_id,
-                                        fila.distnumber
+                                        fila.distnumber,
+                                        fila.comentario
                                         );
                             });
                             toastr.success(res2.mensaje, "El bid&oacute;n reutilizado correctamente" + fila.mov_id);
@@ -598,7 +638,7 @@ function agregarBidonGrilla() {
 }
 
 /*esta funcion agrega la nueva fila*/
-function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, resp, f_dev, cantidad, cantidadR, accion, distnumber) {
+function agregarFilaBidon(mov_id, cod_barra, cod_barra2, cod_art, name_art, pres, ot, resp, f_dev, cantidad, cantidadR, accion, distnumber, comentario) {
     // Obtener la cantidad de filas actuales para calcular el índice
     const index = tablaBidones.rows().count() + 1; // Agregar 1 para obtener el nuevo índice
     const newData = [
@@ -610,11 +650,13 @@ function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, res
         cod_barra,
         cod_barra2,
         f_dev,
+        cod_art,
         name_art,
         distnumber,
         pres,
         ot,
-        resp
+        resp,
+        comentario
     ];
     // Agregar la nueva fila a la tabla
     var rowNode = tablaBidones.row.add(newData).draw(false).node();
@@ -622,8 +664,8 @@ function agregarFilaBidon(mov_id, cod_barra, cod_barra2, name_art, pres, ot, res
     // Asignar ID a la fila recién agregada
     $(rowNode).attr('id', 'row' + accion);
 
-    // Limpiar el campo de código de barras
-    $('#cod_barra').val('');
+    // Limpia los campos de texto
+    $("#cod_barra, #comentario, #cant_unit").val("");
 
     // Volver a ordenar las filas en orden descendente según el índice (columna 0)
     tablaBidones.order([1, 'desc']).draw();
@@ -645,24 +687,24 @@ function optionTipoMov(tipo) {
         $(".card-header").removeClass(removeClasses).addClass(addClass);
     }
     // Reseteo general
-    resetForm();
+    resetFormBidones();
 
     switch (tipo) {
         case "1":
             changeHeaderColor("bg-warning bg-danger", "bg-primary");
-            toggleElements("#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones", "#row_responsable_entrega, #row_lote, #row_cant_unit");
+            toggleElements("#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones, #row_comentario", "#row_responsable_entrega, #row_lote, #row_cant_unit");
             break;
         case "2":
             changeHeaderColor("bg-primary bg-danger", "bg-warning");
-            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot,#row_responsable_entrega, #row_lote, #row_cant_unit");
+            toggleElements("#row_responsable, #row_ot, #row_codebar, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot,#row_responsable_entrega, #row_lote, #row_cant_unit, #row_comentario");
             break;
         case "4":
             changeHeaderColor("bg-primary bg-warning", "bg-danger");
-            toggleElements("#row_ot, #row_codebar, #row_responsable_entrega, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot, #row_responsable, #row_lote, #row_cant_unit");
+            toggleElements("#row_ot, #row_codebar, #row_responsable_entrega, #content_tb_bidones", "#row_devolucion, #row_articulo, #row_presentacion, #row_agregar, #row_ot, #row_responsable, #row_lote, #row_cant_unit, #row_comentario");
             traerGrillaBidones("TODOS");
             break;
         default:
-            toggleElements("", "#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones, #row_responsable_entrega, #row_lote, #row_cant_unit");
+            toggleElements("", "#row_responsable, #row_ot, #row_devolucion, #row_articulo, #row_presentacion, #row_codebar, #row_agregar, #content_tb_bidones, #row_responsable_entrega, #row_lote, #row_cant_unit, #row_comentario");
             break;
     }
 }
@@ -709,6 +751,7 @@ function traerGrillaBidones(responsable) {
             let index = 1; // Iniciamos un contador de índice
             if (estado == "P") {
                 bidones.forEach(fila => {
+                    let fecha_dev = formatDateToDDMMYYYY(fila.fechaDevolucion);
                     let newRow = tablaBidones.row.add([
                         `<button id="btnEliminarBidon" class="btn btn-sm btn-warning text-center" onclick="deshacerCargaBidon(${fila.mov_id},${fila.cantidadEntregada},'${fila.distnumber}')"><i class="fa-solid fa-trash"></i></button>`,
                         index, // Añadir el índice en la primera columna
@@ -717,12 +760,14 @@ function traerGrillaBidones(responsable) {
                         parseFloat(fila.cantidadEntregada).toFixed(1),
                         fila.codigoBarra,
                         fila.codigoBarra2,
-                        fila.fechaDevolucion,
+                        fecha_dev,
+                        fila.itemcode,
                         fila.nombre,
                         fila.distnumber,
                         fila.presentacion,
                         fila.ot,
-                        fila.responsable
+                        fila.responsable,
+                        fila.comentario
                     ]).draw().node(); // Obtén el nodo del `tr` recién creado
 
                     $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
@@ -734,6 +779,7 @@ function traerGrillaBidones(responsable) {
                 tablaBidones.order([1, 'desc']).draw(); // 'desc' para ordenar de mayor a menor en la columna mov_id
             } else if (estado == "E") {
                 bidones.forEach(fila => {
+                    let fecha_dev = formatDateToDDMMYYYY(fila.fechaDevolucion);
                     let cantidadRecibida = fila.cantidadRecibida ? parseFloat(fila.cantidadRecibida).toFixed(2) : "";
                     let cantidadEntregada = parseFloat(fila.cantidadEntregada).toFixed(2);
                     let newRow = tablaBidones.row.add([
@@ -744,12 +790,14 @@ function traerGrillaBidones(responsable) {
                         cantidadEntregada,
                         fila.codigoBarra,
                         `<span id="codespan${fila.mov_id}">${fila.codigoBarra2}</span><input type="text" id="code${fila.mov_id}" class="form-control editable" value="${fila.codigoBarra2}" style="display:none;" onblur="escanCodBarReasig(${fila.mov_id}, this)" onkeypress="escanCodBarReasig(${fila.mov_id}, this)"/>`, // Celda editable para codigoBarra2
-                        fila.fechaDevolucion,
+                        fecha_dev,
+                        fila.itemcode,
                         fila.nombre,
                         fila.distnumber,
                         fila.presentacion,
                         fila.ot,
-                        fila.responsable
+                        fila.responsable,
+                        fila.comentario
                     ]).draw().node(); // Obtén el nodo del `tr` recién creado
 
                     $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
@@ -759,6 +807,7 @@ function traerGrillaBidones(responsable) {
                 tablaBidones.order([1, 'desc']).draw(); // 'desc' para ordenar de mayor a menor en la columna mov_id
             } else {
                 bidones.forEach(fila => {
+                    let fecha_dev = formatDateToDDMMYYYY(fila.fechaDevolucion);
                     let newRow = tablaBidones.row.add([
                         `<input type="checkbox" class="chk-mov-id" value="${fila.mov_id}" onchange="mostrarOcultarCeldabidon(${fila.mov_id})"/>`, // Checkbox para identificar el mov_id
                         index,
@@ -767,12 +816,14 @@ function traerGrillaBidones(responsable) {
                         fila.cantidadEntregada,
                         fila.codigoBarra,
                         fila.codigoBarra2,
-                        fila.fechaDevolucion,
+                        fecha_dev,
+                        fila.itemcode,
                         fila.nombre,
                         fila.distnumber,
                         fila.presentacion,
                         fila.ot,
-                        fila.responsable
+                        fila.responsable,
+                        fila.comentario
                     ]).draw().node(); // Obtén el nodo del `tr` recién creado
 
                     $(newRow).attr('id', 'row' + fila.mov_id); // Agregamos un id a cada tr para luego poder eliminarlo en caso de deshacer la acción
@@ -783,7 +834,7 @@ function traerGrillaBidones(responsable) {
 
             }
             // Restablecer valores de los campos del formulario
-            $("#ot, #dev_estimada, #cant, #bidon, #cod_barra, #cant_unit").val('');
+            $("#ot, #dev_estimada, #cant, #bidon, #cod_barra, #cant_unit, #comentario").val('');
             $("#articulo, #pres, #lote").val('').selectpicker('refresh');
 
             // Habilitar o deshabilitar el botón dependiendo de si hay bidones en la tabla
@@ -922,8 +973,8 @@ function escanCodBarraBidon() {
     if (event.keyCode === 13 || event.which === 13) { // Si presiona Enter
         if (estado == "E") {
             agregarBidonGrilla(); // Agrega un bidón si está en estado "E"
-            $("#cod_barra").val(""); // Limpia el campo del código de barra
         }
+
 
         if (estado == "R" || estado == "D") {
             // Verifica si el código de barra existe en las columnas 2 o 3 de la tabla
@@ -1186,7 +1237,7 @@ function confirmarMovBidonV1() {
 //                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa");
 //                                clearTable();
 //                                $("#btnConfirBidon").prop("disabled", true); // deshabilitar el botón
-//                                resetForm();
+//                                resetFormBidones();
 //                            } else if (estado == "R" || estado == "D") {
 //                                traerGrillaBidones(responsable);//recargamos la tabla luego de confirmar la operación
 //                                toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa");
@@ -1212,9 +1263,17 @@ function confirmarMovBidonV1() {
 //    }
 }
 
+// Función para convertir yyyy-mm-dd a dd/mm/yyyy
+function formatDateToDDMMYYYY(dateString) {
+    const [year, month, day] = dateString.split('-');
+    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+}
+
 function confirmarMovBidon() {
     let responsable = $("#responsable").val();
     let resp_entrega = $("#resp_entrega").val();
+    let ot = $("#ot").val();
+    let f_tr = formatDateToDDMMYYYY($("#fecha_actual").val());
     let resp_entrega_name = $("#resp_entrega").find(':selected').attr('name');
     let resp_recepcion_name = $("#responsable").find(':selected').attr('name');
     let estado = $("#tipo_mov").find(':selected').attr('estado');
@@ -1245,8 +1304,9 @@ function confirmarMovBidon() {
                     cant_entre: data[4],
                     cod_barra: data[5],
                     f_dev: data[7],
-                    nombre: data[8],
-                    distnumber: data[9]
+                    itemcode: data[8],
+                    distnumber: data[10],
+                    f_transfer: f_tr
                 });
             }
         }
@@ -1291,24 +1351,24 @@ function confirmarMovBidon() {
                         if (res.tipo === 1) {
                             if (estado === "E") {
                                 const transferData = {
-                                    mensaje: res.mensaje,
+                                    ot: ot,
+                                    fecha_tr: f_tr,
                                     responsable: resp_recepcion_name,
-                                    estado: estado,
                                     tableData: tableData,
                                     fecha: new Date().toISOString()
                                 };
                                 // Guardar en el historial
                                 saveToHistory(transferData);
                                 try {
-                                    generatePDF(res.mensaje, resp_recepcion_name, estado, tableData);
-                                    toastr.success(res.mensaje, "Actualización exitosa mod: E");
+                                    generatePDF(resp_recepcion_name, ot, tableData, f_tr);
+                                    toastr.success(res.mensaje, "Actualizaci&oacute;n exitosa mod: E");
                                 } catch (error) {
                                     toastr.error("Error al generar el PDF. Puede regenerarlo desde el historial", "Error");
                                 }
                                 setTimeout(() => {
                                     clearTable();
                                     $("#btnConfirBidon").prop("disabled", true);
-                                    resetForm();
+                                    resetFormBidones();
                                 }, 2000);
                             } else {
                                 traerGrillaBidones(estado === "R" ? responsable : "TODOS");
@@ -1332,113 +1392,160 @@ function confirmarMovBidon() {
     }
 }
 
-function generatePDF(mensaje, responsable, estado, tableData) {
+function generatePDF(responsable, ot, tableData, fecha_transferencia) {
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [80, 297]
+        format: [80, 210] // Ajuste final de altura
     });
 
-    let yPosition = 10;
-    const lineHeight = 5;
-    const startX = 5;
-    const maxWidth = 70;
+    let yPosition = 8; // Margen superior reducido
+    const lineHeight = 6;
+    const startX = 8; // Aumentado de 5 a 8 para más margen izquierdo
+    const maxWidth = 64; // Reducido de 70 a 64 para más margen derecho
 
-    const centerText = (text, y) => {
+    const centerText = (text, y, size = 10, bold = false) => {
+        doc.setFontSize(size);
+        doc.setFont(undefined, bold ? 'bold' : 'normal');
         const textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
         const x = (80 - textWidth) / 2;
         doc.text(text, x, y);
     };
 
     const addDivider = (y) => {
-        doc.setLineWidth(0.1);
-        doc.line(startX, y, 75, y);
-        return y + lineHeight;
+        doc.setLineWidth(0.5);
+        doc.line(startX, y, 72, y); // Ajustado de 75 a 72 para coincidir con el nuevo ancho
+        return y + 3;
     };
 
-    // Encabezado del ticket
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    centerText('CONTROL DE BIDONES', yPosition);
-    yPosition += lineHeight * 1.5;
+    // **Encabezado del ticket**
+    centerText('ENTREGA INSUMOS', yPosition, 14, true);
+    yPosition += lineHeight + 1;
 
-    // Fecha y hora
-    doc.setFontSize(8);
+    // **Fecha y hora del reporte**
     const now = new Date();
     const dateStr = now.toLocaleDateString();
     const timeStr = now.toLocaleTimeString();
-    centerText(`Fecha: ${dateStr} ${timeStr}`, yPosition);
-    yPosition += lineHeight * 1.5;
-
-    // Información del responsable
-    doc.setFont(undefined, 'normal');
-    doc.text(`Responsable: ${responsable}`, startX, yPosition);
-    yPosition += lineHeight * 1.5;
-
-    // Agregar divisor
-    yPosition = addDivider(yPosition);
-
-    // Encabezado de detalles
-    doc.setFontSize(7);
-    doc.setFont(undefined, 'bold');
-    doc.text('ID', startX, yPosition);
-    doc.text('CANT', startX + 10, yPosition);
-    doc.text('COD', startX + 20, yPosition);
-    doc.text('FECHA', startX + 35, yPosition);
-    doc.text('DIST', startX + 55, yPosition);
+    centerText(`FECHA REP: ${dateStr} ${timeStr}`, yPosition, 10, true);
     yPosition += lineHeight;
 
-    // Detalles de los items
+    // **Fecha de la transferencia**
+    centerText(`FECHA TRAN: ${fecha_transferencia}`, yPosition, 10, true);
+    yPosition += lineHeight;
+
+    // **Información del responsable y OT**
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`RESPONSABLE: ${responsable.toUpperCase()}`, startX, yPosition);
+    yPosition += lineHeight - 2;
+    doc.text(`NRO OT: ${ot || 'NO ESPECIFICADO'}`, startX, yPosition);
+    yPosition += lineHeight;
+
+    // **Agregar divisor**
+    yPosition = addDivider(yPosition);
+
+    // **Encabezado de la tabla**
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('COD', startX, yPosition);
+    doc.text('CANT', startX + 22, yPosition);
+    doc.text('DIST', startX + 40, yPosition);
+    yPosition += lineHeight - 2;
+
+    // **Contenido de la tabla**
     doc.setFont(undefined, 'normal');
     tableData.forEach(row => {
-        if (yPosition > 287) {
+        if (yPosition > 180) { // Si se excede, se agrega una nueva página
             doc.addPage();
             yPosition = 10;
         }
 
-        doc.text(String(row.id_mov), startX, yPosition);
-        doc.text(String(row.cant_entre), startX + 10, yPosition);
-        doc.text(String(row.cod_barra), startX + 20, yPosition);
-        doc.text(String(row.f_dev), startX + 35, yPosition);
-        doc.text(String(row.distnumber), startX + 55, yPosition);
-        yPosition += lineHeight;
+        doc.text(String(row.itemcode || ''), startX, yPosition);
+        doc.text(String(row.cant_entre || ''), startX + 22, yPosition); // Ajustado
+        doc.text(String(row.distnumber || ''), startX + 40, yPosition); // Ajustado
+        yPosition += lineHeight - 2;
     });
 
-    // Agregar divisor final
+    // **Agregar divisor final**
     yPosition = addDivider(yPosition);
-    yPosition += lineHeight;
+    yPosition += 4;
 
-    // Agregar mensaje
+    // **Espacio para firmas**
     doc.setFontSize(8);
-    const mensajeLines = doc.splitTextToSize(mensaje, maxWidth);
-    doc.text(mensajeLines, startX, yPosition);
-    yPosition += (lineHeight * mensajeLines.length) + lineHeight * 2;
+    doc.setFont(undefined, 'bold');
+    const signatureY = yPosition + 12;
 
-    // Espacio para firmas
-    doc.setFontSize(7);
+    // **Firma de entrega**
+    doc.line(startX + 2, signatureY, startX + 27, signatureY); // Ajustado de 5-30 a 2-27
+    doc.text('ENTREGADO POR:', startX + 4, signatureY + 4);
+    doc.text('FIRMA Y CI', startX + 7, signatureY + 7);
 
-    // Firma de entrega
-    doc.line(startX + 5, yPosition + 15, startX + 30, yPosition + 15); // Línea para firma entrega
-    doc.text('Entregado por:', startX + 8, yPosition + 18);
-    doc.setFontSize(6);
-    doc.text('Firma y CI', startX + 10, yPosition + 21);
-
-    // Firma de recepción
-    doc.setFontSize(7);
-    doc.line(startX + 40, yPosition + 15, startX + 65, yPosition + 15); // Línea para firma recepción
-    doc.text('Recibido por:', startX + 45, yPosition + 18);
-    doc.setFontSize(6);
-    doc.text('Firma y CI', startX + 47, yPosition + 21);
+    // **Firma de recepción**
+    doc.line(startX + 39, signatureY, startX + 64, signatureY); // Ajustado de 45-70 a 39-64
+    doc.text('RECIBIDO POR:', startX + 41, signatureY + 4);
+    doc.text('FIRMA Y CI', startX + 44, signatureY + 7);
 
     yPosition += lineHeight * 5;
 
-    // Pie de página
-    doc.setFontSize(7);
-    centerText('-- Fin del documento --', yPosition);
+    // **Pie de página**
+    centerText('-- FIN DEL DOCUMENTO --', yPosition, 10, false);
 
-    // Generar y guardar el PDF
-    doc.save(`Ticket_${responsable}_${dateStr.replace(/\//g, '-')}.pdf`);
+    // **Generar y guardar el PDF**
+    doc.save(`Ticket_${responsable}_${ot}_${dateStr.replace(/\//g, '-')}.pdf`);
+}
+
+function generatePDFV2(mensaje, responsable, estado, tableData) {
+    let ticketContent = '';
+
+    // **Comandos ESC/POS básicos**
+    ticketContent += '\x1B\x40'; // Reiniciar impresora
+    ticketContent += '\x1B\x21\x00'; // Tamaño de fuente normal
+    ticketContent += '\x1B\x61\x01'; // Centrar texto
+    ticketContent += 'CONTROL DE BIDONES\n';
+
+    const now = new Date();
+    ticketContent += `Fecha: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}\n`;
+    ticketContent += '\x1B\x61\x00'; // Alinear a la izquierda
+    ticketContent += `Responsable: ${responsable}\n`;
+    ticketContent += '-'.repeat(32) + '\n'; // Línea divisoria
+
+    // **Encabezados de la tabla**
+    ticketContent += 'ID   CANT  COD      FECHA       DIST\n';
+
+    // **Recorrer `tableData` asegurando el formato**
+    tableData.forEach(row => {
+        const id_mov = String(row.id_mov || '').padEnd(4);
+        const cant_entre = String(row.cant_entre || '').padEnd(5);
+        const cod_barra = String(row.cod_barra || '').padEnd(7);
+        const f_dev = String(row.f_dev || '').padEnd(10);
+        const distnumber = String(row.distnumber || '').padEnd(5);
+
+        ticketContent += `${id_mov}${cant_entre}${cod_barra}${f_dev}${distnumber}\n`;
+    });
+
+    ticketContent += '-'.repeat(32) + '\n';
+    ticketContent += `${mensaje}\n\n`;
+    ticketContent += 'Entregado por: __________  Recibido por: ___________\n';
+    ticketContent += 'Firma y CI                Firma y CI\n\n';
+
+    ticketContent += '\x1B\x61\x01'; // Centrar
+    ticketContent += '-- Fin del documento --\n';
+    ticketContent += '\x0A\x0A'; // Saltos de línea
+    ticketContent += '\x1D\x56\x00'; // Corte de papel
+
+    // **Enviar a la impresora térmica usando QZ Tray**
+    if (qz.websocket.isActive()) {
+        qz.printers.find("Epson TM-U220")
+                .then(printer => {
+                    const config = qz.configs.create(printer);
+                    return qz.print(config, [{type: 'raw', format: 'plain', data: ticketContent}]);
+                })
+                .then(() => console.log("Ticket enviado a la impresora"))
+                .catch(err => console.error("Error al imprimir:", err));
+    } else {
+        console.error("QZ Tray no está activo. Asegúrate de que está ejecutándose.");
+    }
 }
 
 // Función para manejar el escaneo o ingreso manual del código de barras
@@ -1964,7 +2071,7 @@ function checkJobStatus(jobName) {
 /*REIMPRESION TICKETS*/
 /// Variable global para almacenar el historial de transferencias
 let transferHistory = [];
-const MAX_HISTORY = 5;
+const MAX_HISTORY = 10;
 
 // Función para cargar el historial al iniciar la página
 function loadTransferHistory() {
@@ -2010,6 +2117,7 @@ function showHistoryModal() {
         const date = new Date(transfer.fecha);
         const row = `
             <tr>
+                <td>${transfer.ot}</td>
                 <td>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
                 <td>${transfer.responsable}</td>
                 <td>${transfer.tableData.length}</td>
@@ -2035,10 +2143,10 @@ function regenerarPDFFromHistory(transferId) {
     if (transfer) {
         try {
             generatePDF(
-                    transfer.mensaje,
                     transfer.responsable,
-                    transfer.estado,
-                    transfer.tableData
+                    transfer.ot,
+                    transfer.tableData,
+                    transfer.fecha_tr
                     );
             toastr.success("PDF regenerado exitosamente", "Exito");
         } catch (error) {
@@ -2069,4 +2177,9 @@ function removeFromHistory(transferId) {
         }
     });
 }
+
+//remover items desde la consola 
+/*
+ localStorage.removeItem('transferHistory');
+ */
 

@@ -49,12 +49,14 @@
             bidon.put("codigoBarra2", rs.getString("rmov_codeBar2") == null ? "" : rs.getString("rmov_codeBar2"));
             bidon.put("distnumber", rs.getString("distnumber") == null ? "" : rs.getString("distnumber"));
             bidon.put("nombre", rs.getString("rmov_itemName"));
+            bidon.put("itemcode", rs.getString("rmov_itemCode"));
             bidon.put("presentacion", rs.getString("pre_name"));
             bidon.put("ot", rs.getString("rmov_OT"));
             bidon.put("responsable", rs.getString("rmov_res_name"));
             bidon.put("fechaDevolucion", rs.getString("rmov_fecha_pdev"));
             bidon.put("cantidadEntregada", rs.getString("rmov_cantidad"));
             bidon.put("cantidadRecibida", rs.getString("rmov_cantR") == null ? "" : rs.getString("rmov_cantR"));
+            bidon.put("comentario", rs.getString("rmov_comentario") == null ? "" : rs.getString("rmov_comentario"));
             bidon.put("mov_id", rs.getString("rmov_id")); // Este valor será utilizado en la acción de eliminar
 
             bidones.put(bidon);

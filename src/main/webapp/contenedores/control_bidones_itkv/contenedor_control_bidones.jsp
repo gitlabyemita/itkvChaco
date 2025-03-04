@@ -78,6 +78,9 @@
 <br>
 <br>
 
+<input type="date" id="fecha_actual" name="fecha_actual" class="form-control" style="display: none">
+
+
 <div class="col-12">
     <div class="col-12 col-md-12 col-lg-12">
 
@@ -208,6 +211,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="row" id="row_comentario" style="display: none">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="comentario">Comentario</label>
+                            <input id="comentario" name="comentario" class="form-control form-control-sm" placeholder="Ingrese un comentario">
+                        </div>
+                    </div>
+                </div>
                 <div class="row" id="row_codebar" style="display: none">
                     <div class="col-12">
                         <div class="form-group">
@@ -248,11 +259,13 @@
                                 <th class="text-center" width="80">COD_BARRA</th>
                                 <th class="text-center" width="80">COD_BARRA REASIG</th>
                                 <th class="text-center" width="60">F_DEVOLUCION</th>
+                                <th class="text-center" width="80">COD_ART</th>
                                 <th class="text-center" width="80">NOMBRE</th>
                                 <th class="text-center" width="80">DISTNUMBER</th>
                                 <th class="text-center" width="80">PRESENTACION</th>
                                 <th class="text-center" width="60">O.T.</th>
                                 <th class="text-center" width="60">RESPONSABLE</th>
+                                <th class="text-center" width="60">COMENTARIO</th>
                             </tr>
                         </thead>
                         <tbody class="text-center">
@@ -280,8 +293,8 @@
         </div>
     </div>
 </div>
-                                
-                                <!-- Modal de historial -->
+
+<!-- Modal de historial -->
 <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -298,6 +311,7 @@
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
+                                <th>OT</th>
                                 <th>Fecha y Hora</th>
                                 <th>Responsable</th>
                                 <th>Cantidad Items</th>

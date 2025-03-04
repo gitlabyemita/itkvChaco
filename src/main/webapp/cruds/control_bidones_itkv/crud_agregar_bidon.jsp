@@ -24,10 +24,11 @@
             String name_art = request.getParameter("name_art");
             String resp = request.getParameter("resp");
             String lote = request.getParameter("lote");
+            String comentario = request.getParameter("comentario");
 
             connection.setAutoCommit(false);
             CallableStatement callableStatement = null;
-            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(NULL,NULL,?,?,?,NULL,?,?,NULL,?,?,NULL,NULL,?,?,?,NULL,NULL,NULL,NULL,NULL,?,NULL,?,NULL,NULL,?,?,?)}");
+            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(NULL,NULL,?,?,?,NULL,?,?,NULL,?,?,NULL,NULL,?,?,?,NULL,NULL,NULL,NULL,NULL,?,?,?,NULL,NULL,?,?,?)}");
 
             callableStatement.setString(1, cod_art);
             callableStatement.setString(2, name_art);
@@ -40,16 +41,17 @@
             callableStatement.setString(9, resp);
             callableStatement.setString(10, f_dev);
             callableStatement.setString(11, estado);
-            callableStatement.setString(12, lote);
+            callableStatement.setString(12, comentario);
+            callableStatement.setString(13, lote);
 
-            callableStatement.registerOutParameter(13, java.sql.Types.INTEGER); // tipo
             callableStatement.registerOutParameter(14, java.sql.Types.INTEGER); // tipo
-            callableStatement.registerOutParameter(15, java.sql.Types.VARCHAR); // mensaje
+            callableStatement.registerOutParameter(15, java.sql.Types.INTEGER); // tipo
+            callableStatement.registerOutParameter(16, java.sql.Types.VARCHAR); // mensaje
             callableStatement.execute();
 
-            id = callableStatement.getInt(13);
-            tipo = callableStatement.getInt(14);
-            mensaje = callableStatement.getString(15);
+            id = callableStatement.getInt(14);
+            tipo = callableStatement.getInt(15);
+            mensaje = callableStatement.getString(16);
             if (tipo == 1 || tipo == 2) {
                 connection.commit();
             } else {
