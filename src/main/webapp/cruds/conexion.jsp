@@ -18,8 +18,8 @@
     String user = "sa";
    // String user = "cch";
     String passwd = "Paraguay2017";
-//    String db = "GrupoMaehara";
-    String db = "GrupoMaehara2";
+    String db = "GrupoMaehara";
+//    String db = "GrupoMaehara2";
   //    String ip = "localhost";
     String ip = "192.168.55.140";
     Connection connection=null;

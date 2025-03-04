@@ -89,11 +89,11 @@ function traerSelectArticulo() {
                         // Determinar el texto de presentación basado en presUnica
                         let presUnicaText = "";
                         if (presUnica === "1") {
-                            presUnicaText = "Control de Bidones";
+                            presUnicaText = "Control de Insumos";
                         } else if (presUnica === "0") {
                             presUnicaText = ""; // No mostrar texto si es "0"
                         } else {
-                            presUnicaText = "<span class='text-danger fw-bold'>Definir control de Bidones</span>";
+                            presUnicaText = "<span class='text-danger fw-bold'>Definir control de art&iacute;culo</span>";
                         }
 
                         // Determinar clases según la condición
