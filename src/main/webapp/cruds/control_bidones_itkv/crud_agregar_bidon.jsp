@@ -12,6 +12,7 @@
         int tipo = 0;
         int id = 0;
         try {
+
             String tipo_mov = request.getParameter("tipo");
             String ot = request.getParameter("ot");
             String id_resp = request.getParameter("id_resp");
@@ -25,10 +26,11 @@
             String resp = request.getParameter("resp");
             String lote = request.getParameter("lote");
             String comentario = request.getParameter("comentario");
+            String id_usuario = (String) sesionOk.getAttribute("id_usuario");
 
             connection.setAutoCommit(false);
             CallableStatement callableStatement = null;
-            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(NULL,NULL,?,?,?,NULL,?,?,NULL,?,?,NULL,NULL,?,?,?,NULL,NULL,NULL,NULL,NULL,?,?,?,NULL,NULL,?,?,?)}");
+            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(NULL,NULL,?,?,?,NULL,?,?,NULL,?,?,NULL,NULL,?,?,?,NULL,NULL,NULL,NULL,NULL,?,?,?,NULL,NULL,?,?,?,?)}");
 
             callableStatement.setString(1, cod_art);
             callableStatement.setString(2, name_art);
@@ -43,15 +45,16 @@
             callableStatement.setString(11, estado);
             callableStatement.setString(12, comentario);
             callableStatement.setString(13, lote);
+            callableStatement.setString(14, id_usuario);
 
-            callableStatement.registerOutParameter(14, java.sql.Types.INTEGER); // tipo
             callableStatement.registerOutParameter(15, java.sql.Types.INTEGER); // tipo
-            callableStatement.registerOutParameter(16, java.sql.Types.VARCHAR); // mensaje
+            callableStatement.registerOutParameter(16, java.sql.Types.INTEGER); // tipo
+            callableStatement.registerOutParameter(17, java.sql.Types.VARCHAR); // mensaje
             callableStatement.execute();
 
-            id = callableStatement.getInt(14);
-            tipo = callableStatement.getInt(15);
-            mensaje = callableStatement.getString(16);
+            id = callableStatement.getInt(15);
+            tipo = callableStatement.getInt(16);
+            mensaje = callableStatement.getString(17);
             if (tipo == 1 || tipo == 2) {
                 connection.commit();
             } else {
