@@ -58,6 +58,13 @@
 .update-pending {
     box-shadow: inset 0px 0px 8px #ffcc00 !important;
 }
+
+.not-editable {
+    background-color: #a6a2a2 !important; /* Fondo gris claro para indicar que no es editable */
+    cursor: not-allowed !important; /* Cambiar el cursor para indicar que no se puede interactuar */
+    opacity: 0.6 !important; /* Reducir la opacidad para un efecto visual */
+}
+
 .table-xs td,th {
     padding: 0.175rem 0.75rem 0.175rem 0.35rem !important;
     font-size: 0.85rem !important;
