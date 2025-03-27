@@ -14,22 +14,24 @@
         try {
             String mov_id = request.getParameter("mov_id");
             String cant = request.getParameter("cant");
+            String id_usuario = (String) sesionOk.getAttribute("id_usuario");
 
             connection.setAutoCommit(false);
             CallableStatement callableStatement = null;
-            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,?,?)}");
+            callableStatement = connection.prepareCall("{call sp_insertar_actualizar_regmov(?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,?,?,?,?)}");
 
             callableStatement.setInt(1, Integer.parseInt(mov_id));
             callableStatement.setFloat(2, Float.parseFloat(cant));
+            callableStatement.setString(3, id_usuario);
 
-            callableStatement.registerOutParameter(3, java.sql.Types.INTEGER); // id
-            callableStatement.registerOutParameter(4, java.sql.Types.INTEGER); // tipo
-            callableStatement.registerOutParameter(5, java.sql.Types.VARCHAR); // mensaje
+            callableStatement.registerOutParameter(4, java.sql.Types.INTEGER); // id
+            callableStatement.registerOutParameter(5, java.sql.Types.INTEGER); // tipo
+            callableStatement.registerOutParameter(6, java.sql.Types.VARCHAR); // mensaje
             callableStatement.execute();
 
-            id = callableStatement.getInt(3);
-            tipo = callableStatement.getInt(4);
-            mensaje = callableStatement.getString(5);
+            id = callableStatement.getInt(4);
+            tipo = callableStatement.getInt(5);
+            mensaje = callableStatement.getString(6);
             if (tipo == 1) {
                 connection.commit();
             } else {
