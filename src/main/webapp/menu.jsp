@@ -402,7 +402,8 @@
             <script src="js/itkv/itkv_funciones.js?v=3.5" type="text/javascript"></script>
             <script src="plugins/autoNumeric.js" type="text/javascript"></script>
             <script src="plugins/compressor.min.js" type="text/javascript"></script>
-            <script src="js/control_bidones_itkv/control_bidones_itkv.js" type="text/javascript"></script>
+            <script src="js/control_bidones_itkv/control_bidones_itkv.js?v=3.5" type="text/javascript"></script>
+            <script src="js/registro_lluvia/registro_lluvia.js?v=3.5" type="text/javascript"></script>
             <!--para notificaciones toastr-->
             <script src="js/toastr.min.js" type="text/javascript"></script>
             <!--<script src="js/JSdataTablesV2_1_5.js" type="text/javascript"></script>-->

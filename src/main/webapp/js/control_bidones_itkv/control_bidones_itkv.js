@@ -1675,7 +1675,9 @@ function actualizarCantidad(mov_id, cant, inputElement) {
         success: function (res) {
             if (res.tipo == 1) {
                 toastr.success(res.mensaje, "Mensaje de &eacute;xito: ");
-                $(tdElement).addClass('update-success').removeClass('update-pending');
+                $("#cantspan" + mov_id).html(Number(cant).toFixed(2)); // Actualiza el atributo value
+                $(inputElement).attr('value', Number(cant).toFixed(2)); // Actualiza el atributo value
+                $(tdElement).addClass('update-success').removeClass('update-pending').removeClass('update-error');
                 setTimeout(function () {
                     $(tdElement).removeClass('update-success');
                 }, 800);
@@ -1684,9 +1686,6 @@ function actualizarCantidad(mov_id, cant, inputElement) {
                 toastr.error('Error al actualizar la cantidad restante: ' + res.mensaje, "Error: ");
                 $(inputElement).val('');
                 $(tdElement).addClass('update-error').removeClass('update-pending');
-                setTimeout(function () {
-                    $(tdElement).removeClass('update-error');
-                }, 1000);
             }
         },
         error: function (err) {
