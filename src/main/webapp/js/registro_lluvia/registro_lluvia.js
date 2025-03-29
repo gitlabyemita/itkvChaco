@@ -12,6 +12,9 @@ function ir_registro_lluvia() {
             $("#contenedor_principal").html(res);
             $("#fecha").val(fecha);
             generar_grilla_registros_lluvias(fecha);
+            // Seleccionar ambos elementos usando sus atributos únicos
+            const $fechaAnchor = $('#btnTableVis');
+            const $fechaExportAnchor = $('#btnTableInvis');
         }
     });
 }
@@ -47,7 +50,6 @@ function generar_grilla_registros_lluvias() {
                     </thead>
                     <tbody>
             `;
-
             if (response.data && response.data.length > 0) {
                 $("#div_registro_lluvia").html(''); // Limpiar el contenedor antes de agregar la tabla
 
@@ -57,15 +59,13 @@ function generar_grilla_registros_lluvias() {
                     const selectedSR_06 = row.observacion_06 === 'S/R' ? 'selected' : '';
                     const selectedSC_18 = row.observacion_18 === 'S/C' ? 'selected' : '';
                     const selectedSR_18 = row.observacion_18 === 'S/R' ? 'selected' : '';
-
                     // Usar $("#fecha").val() si row.fecha está vacío o es null
                     const fechaFila = row.fecha && row.fecha.trim() !== '' ? row.fecha : fecha;
-
                     tablaHTML += `
                         <tr data-id-estancia="${row.id_estancia}" data-fecha="${fechaFila}">
                             <td>${row.estancia}</td>
                             <td>${row.fecha || ''}</td>
-                            <td contenteditable="true" data-cantidad="${row.lluvia_mm_06 || ''}" class="contenteditablepd lluvia-mm-06" onfocus="selectValDet(this)" onkeydown="navigateCellsCol5(event, this)" onblur="handleBlurLluvia(this, '06:00')" tabindex="${index * 6 + 1}">
+                            <td contenteditable="true" data-cantidad="${row.lluvia_mm_06 || ''}" class="contenteditablepd lluvia-mm-06" onfocus="selectValDet(this)" onblur="handleBlurLluvia(this, '06:00')" tabindex="${index * 6 + 1}">
                                 ${row.lluvia_mm_06 || ''}
                             </td>
                             <td>
@@ -75,7 +75,7 @@ function generar_grilla_registros_lluvias() {
                                     <option value="S/R" ${selectedSR_06}>S/R</option>
                                 </select>
                             </td>
-                            <td contenteditable="true" data-cantidad="${row.lluvia_mm_18 || ''}" class="contenteditablepd lluvia-mm-18" onfocus="selectValDet(this)" onkeydown="navigateCellsCol5(event, this)" onblur="handleBlurLluvia(this, '18:00')" tabindex="${index * 6 + 3}">
+                            <td contenteditable="true" data-cantidad="${row.lluvia_mm_18 || ''}" class="contenteditablepd lluvia-mm-18" onfocus="selectValDet(this)" onblur="handleBlurLluvia(this, '18:00')" tabindex="${index * 6 + 3}">
                                 ${row.lluvia_mm_18 || ''}
                             </td>
                             <td>
@@ -93,15 +93,42 @@ function generar_grilla_registros_lluvias() {
             }
 
             tablaHTML += `</tbody></table>`;
-
             $("#div_registro_lluvia").html(tablaHTML);
-
+            let tablaExportHTML = `
+                <table id="tabla_registro_lluvias_export">
+                    <thead>
+                        <tr>
+                            <th>ESTANCIAS/RETIROS</th>
+                            <th>06:00</th>
+                            <th>18:00</th>
+                            <th>TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            response.data.forEach((row) => {
+                const mm06 = row.lluvia_mm_06?.trim() || "";
+                const obs06 = row.observacion_06?.trim() || "";
+                const mm18 = row.lluvia_mm_18?.trim() || "";
+                const obs18 = row.observacion_18?.trim() || "";
+                const val06 = mm06 || obs06 || "";
+                const val18 = mm18 || obs18 || "";
+                //const fechaFila = row.fecha && row.fecha.trim() !== '' ? row.fecha : fecha;
+                tablaExportHTML += `
+        <tr>
+            <td>${row.estancia}</td>
+            <td>${val06}</td>
+            <td>${val18}</td>
+            <td>${row.total_lluvia_mm || '0'}</td>
+        </tr>`;
+            });
+            tablaExportHTML += `</tbody></table>`;
+            $('#div_registro_lluvia_export').html(tablaExportHTML);
             // Asegurarse de que los campos de lluvia_mm estén deshabilitados si hay una observación
             $("#tabla_registro_lluvias tbody tr").each(function () {
                 const $row = $(this);
                 const observacion06 = $row.find(".observacion-06").val();
                 const observacion18 = $row.find(".observacion-18").val();
-
                 if (observacion06) {
                     $row.find(".lluvia-mm-06")
                             .attr("contenteditable", "false")
@@ -119,11 +146,136 @@ function generar_grilla_registros_lluvias() {
                     $row.find(".lluvia-mm-18").data("cantidad", ""); // Actualizar el valor original
                 }
             });
-        },
+            $("#tabla_registro_lluvias").DataTable({
+
+                paging: false,
+                ordering: false,
+                dom: "Bflrtip",
+                destroy: true,
+                language: {
+                    sSearch: "Buscar:",
+                    sLengthMenu: "Mostrar _MENU_ registros",
+                    sZeroRecords: "No se encontraron resultados",
+                    sEmptyTable: "Ning&uacute;n dato disponible en esta tabla",
+                    sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                    sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                    sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                    sInfoThousands: ",",
+                    sLoadingRecords: "Cargando...",
+                    oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"},
+                    buttons: {copyTitle: "DATOS COPIADOS", copySuccess: {_: "%d FILAS COPIADAS"}}
+                },
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'MOSTRAR / OCULTAR'
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: 'EXCEL'
+                    }
+                ],
+                initComplete: function () {
+                    $("#tabla_registro_lluvias").removeClass("dataTable");
+                    const btnVisible = $('.buttons-excel[aria-controls="tabla_registro_lluvias"]');
+
+                    // Interceptar su clic y redirigir a la tabla oculta
+                    btnVisible.off('click').on('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Disparar el botón de la tabla oculta (el que sí exporta bien)
+                        $('.buttons-excel[aria-controls="tabla_registro_lluvias_export"]').click();
+                        
+                        // 👉 Actualizar y exportar
+                        const tablaExport = $('#tabla_registro_lluvias_export').DataTable();
+                        tablaExport.draw(false);
+                        tablaExport.button('.buttons-excel').trigger();
+                        console.log("se intentó exportar la tabla actualizada");
+                    });
+                    // Selecciona el primer botón y le asigna ID
+                    $('button[aria-controls="tabla_registro_lluvias"].buttons-colvis')
+                            .attr('id', 'btnTableVis');
+                }
+            });
+            $('#tabla_registro_lluvias_export').DataTable({
+                dom: 'Bfrtip',
+                paging: false,
+                searching: false,
+                ordering: false,
+                info: false,
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'MOSTRAR / OCULTAR'
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: 'EXCEL',
+                        title: function () {
+                            let fecha = $('#fecha').val();
+                            let fechaFormateada;
+                            if (fecha.includes('-')) {
+                                let [y, m, d] = fecha.split('-');
+                                fechaFormateada = `${d}/${m}/${y}`;
+                            } else if (fecha.includes('/')) {
+                                let [d, m, y] = fecha.split('/');
+                                fechaFormateada = `${d}/${m}/${y}`;
+                            } else {
+                                fechaFormateada = "Fecha no válida";
+                            }
+
+                            let now = new Date();
+                            let formattedDate = now.toLocaleString("es-ES", {
+                                year: 'numeric', month: '2-digit', day: '2-digit',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                            }).replace(',', '');
+                            return `INFORME REGISTRO DE LLUVIAS: - ${fechaFormateada} - REP: ${formattedDate}`;
+                        }
+                    }
+                ],
+                initComplete: function () {
+                    // Selecciona el segundo botón y le asigna ID
+                    $('button[aria-controls="tabla_registro_lluvias_export"].buttons-colvis')
+                            .attr('id', 'btnTableInvis');
+                    /*                    
+                     const tablaVisible = $('#tabla_registro_lluvias').DataTable();
+                     const tablaOculta = $('#tabla_registro_lluvias_export').DataTable();
+                     // Sincronizar cambios de visibilidad
+                     sincronizarColumnVisibility(tablaVisible, tablaOculta);
+                     tablaVisible.columns().every(function (index) {
+                     const isVisible = this.visible();
+                     tablaOculta.column(index).visible(isVisible);
+                     });
+                     */
+
+                    /*
+                     $('.buttons-excel[aria-controls="tabla_registro_lluvias"]').off('click').on('click', function (e) {
+                     console.log('se intento actualizar cambios');
+                     e.preventDefault();
+                     e.stopPropagation();
+                     
+                     // 👉 Actualizar y exportar
+                     const tablaExport = $('#tabla_registro_lluvias_export').DataTable();
+                     tablaExport.draw(false);
+                     tablaExport.button('.buttons-excel').trigger();
+                     });
+                     */
+                }
+            });
+        }
+        ,
         error: function (error) {
             toastr.error("Error al obtener los datos:", error);
             cerrar_load();
         }
+    }
+    );
+}
+
+function sincronizarColumnVisibility(tablaOrigen, tablaDestino) {
+    tablaOrigen.on('column-visibility.dt', function (e, settings, column, state) {
+// Aplicar la misma visibilidad en la tabla destino
+        tablaDestino.column(column).visible(state);
     });
 }
 
@@ -134,13 +286,12 @@ function handleChangeObservacion(selectElement, hora) {
     const observacion = $select.val();
     const originalObservacion = $select.data("observacion") || ''; // Valor original almacenado en data-observacion
     const $lluviaField = hora === "06:00" ? $row.find(".lluvia-mm-06") : $row.find(".lluvia-mm-18");
-
     // Comparar el valor actual con el valor original
     if (observacion === originalObservacion) {
         return; // No ha cambiado, no hacemos nada
     }
 
-    // Si se selecciona una observación (S/C o S/R), deshabilitar el campo de lluvia_mm y establecerlo en vacío
+// Si se selecciona una observación (S/C o S/R), deshabilitar el campo de lluvia_mm y establecerlo en vacío
     if (observacion) {
         $lluviaField
                 .attr("contenteditable", "false") // Deshabilitar edición
@@ -155,12 +306,10 @@ function handleChangeObservacion(selectElement, hora) {
                 .addClass("contenteditablepd"); // Quitar clase de no editable
     }
 
-    // Actualizar el total
+// Actualizar el total
     updateTotal($row);
-
     // Actualizar el valor original en data-observacion
     $select.data("observacion", observacion);
-
     // Guardar el cambio en el backend
     saveRegistro($row, hora, $select);
 }
@@ -172,13 +321,12 @@ function handleBlurLluvia(cellElement, hora) {
     const newValue = $cell.text().trim();
     const originalValue = $cell.data("cantidad") || ''; // Valor original almacenado en data-cantidad
     const $observacionSelect = hora === "06:00" ? $row.find(".observacion-06") : $row.find(".observacion-18");
-
     // Comparar el valor actual con el valor original
     if (newValue === originalValue) {
         return; // No ha cambiado, no hacemos nada
     }
 
-    // Validar que el valor sea un número válido
+// Validar que el valor sea un número válido
     const parsedValue = parseFloat(newValue);
     if (newValue !== "" && (isNaN(parsedValue) || parsedValue < 0)) {
         toastr.error("Por favor, ingrese un valor numérico válido mayor o igual a 0.");
@@ -186,7 +334,7 @@ function handleBlurLluvia(cellElement, hora) {
         return;
     }
 
-    // Si se ingresa un valor en lluvia_mm, asegurarse de que no haya observación
+// Si se ingresa un valor en lluvia_mm, asegurarse de que no haya observación
     if (newValue !== "") {
         const observacion = $observacionSelect.val();
         if (observacion) {
@@ -196,12 +344,10 @@ function handleBlurLluvia(cellElement, hora) {
         }
     }
 
-    // Actualizar el total
+// Actualizar el total
     updateTotal($row);
-
     // Actualizar el valor original en data-cantidad
     $cell.data("cantidad", newValue);
-
     // Guardar el cambio en el backend
     saveRegistro($row, hora, $cell);
 }
@@ -221,7 +367,6 @@ function saveRegistro($row, hora, element) {
     const estancia = $row.find("td:eq(0)").text();
     const lluvia_mm = hora === "06:00" ? $row.find(".lluvia-mm-06").text() : $row.find(".lluvia-mm-18").text();
     const observacion = hora === "06:00" ? $row.find(".observacion-06").val() : $row.find(".observacion-18").val();
-
     // Validar que no haya valores en ambos campos
     if (lluvia_mm && observacion) {
         toastr.error("No se pueden especificar valores para observación y lluvia_mm al mismo tiempo.");
@@ -230,7 +375,6 @@ function saveRegistro($row, hora, element) {
 
 
     const $tdElement = $(element).closest('td');
-
     $.ajax({
         type: "POST",
         url: "cruds/registro_lluvia/upsert_registro_lluvias.jsp", // Ajusta la URL según tu backend
@@ -252,11 +396,39 @@ function saveRegistro($row, hora, element) {
             if (response.tipo === 1) {
                 toastr.success(response.mensaje);
 
+                // Obtener índice de fila actual en la tabla visible
+                const filaIndex = $row.index();
+
+                // Buscar la misma fila en la tabla export
+                const $rowExport = $('#tabla_registro_lluvias_export tbody tr').eq(filaIndex);
+
+                // Determinar nuevo valor a colocar (mm o obs)
+                const nuevoValor = lluvia_mm || observacion || "";
+
+                // Insertar en la columna correspondiente (1 para 06:00, 2 para 18:00)
+                if (hora === "06:00") {
+                    $rowExport.find('td').eq(1).text(nuevoValor);
+                } else if (hora === "18:00") {
+                    $rowExport.find('td').eq(2).text(nuevoValor);
+                }
+
+                // Recalcular TOTAL (solo si hay al menos un mm)
+                let mm06 = parseFloat($row.find('.lluvia-mm-06').text().trim().replace(',', '.'));
+                let mm18 = parseFloat($row.find('.lluvia-mm-18').text().trim().replace(',', '.'));
+
+                // Si no es número, poner como 0
+                mm06 = isNaN(mm06) ? 0 : mm06;
+                mm18 = isNaN(mm18) ? 0 : mm18;
+
+                // Calcular y actualizar total
+                const nuevoTotal = (mm06 + mm18).toFixed(2);
+                $row.find('.total-lluvia').text(nuevoTotal);
+                $rowExport.find('td').eq(3).text(nuevoTotal);
+
                 $tdElement.addClass('update-success').removeClass('update-pending');
                 setTimeout(function () {
                     $tdElement.removeClass('update-success');
                 }, 800);
-
             } else {
                 toastr.error("Error al guardar el registro:", response.mensaje);
                 $tdElement.addClass('update-error').removeClass('update-pending');
