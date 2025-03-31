@@ -44,10 +44,17 @@
                             <div class="col-12 col-md-6 col-lg-4 col-xl-3 mx-auto">
                                 <div class="form-group d-flex align-items-center">
                                     <label for="fecha" class="mr-2">Fecha</label>
-                                    <input type="date" id="fecha" name="fecha" class="form-control form-control-sm text-center" onkeypress="if(event.key === 'Enter') { event.preventDefault(); generar_grilla_registros_lluvias(); }">
-                                    <button id="btnBuscarFecha" class="btn btn-sm btn-primary ml-2" onclick="generar_grilla_registros_lluvias();">
+                                    <input type="date" id="fecha" name="fecha" class="form-control form-control-sm text-center" onkeypress="if (event.key === 'Enter') {
+                                                event.preventDefault();
+                                                generar_grilla_registros_lluvias();
+                                            }">
+                                            <button id="btnBuscarFecha" class="btn btn-sm btn-primary ml-2" onclick="generar_grilla_registros_lluvias();" title="buscar">
                                         <i class="fas fa-search"></i>
                                     </button>
+                                    <button id="btnBuscarFecha" class="btn btn-sm btn-success ml-2" onclick="ir_informe_registro_lluvias();" title="ir a informe por rango de fecha ">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+
                                 </div>
                             </div>
                         </div>
@@ -57,13 +64,13 @@
                 <div class="row">
                     <div class="col-12" id="div_registro_lluvia">
 
-                  
+
                     </div>
                 </div>
                 <div class="row" style="display:none;">
                     <div class="col-12" id="div_registro_lluvia_export">
 
-                  
+
                     </div>
                 </div>
             </div>

@@ -185,7 +185,7 @@ function generar_grilla_registros_lluvias() {
                         e.stopPropagation();
                         // Disparar el botón de la tabla oculta (el que sí exporta bien)
                         $('.buttons-excel[aria-controls="tabla_registro_lluvias_export"]').click();
-                        
+
                         // 👉 Actualizar y exportar
                         const tablaExport = $('#tabla_registro_lluvias_export').DataTable();
                         tablaExport.draw(false);
@@ -450,4 +450,142 @@ function saveRegistro($row, hora, element) {
             generar_grilla_registros_lluvias(); // Recargar la grilla en caso de error
         }
     });
+}
+
+/*informe registro lluvias por rango de fecha*/
+
+function ir_informe_registro_lluvias() {
+    $.ajax({
+        type: "post",
+        url: 'contenedores/registro_lluvia/contenedor_informe_registro_lluvia.jsp',
+        success: function (res) {
+            $("#contenedor_principal").html("");
+            $("#contenedor_principal").html(res);
+            $('.selectpicker').selectpicker();
+            cargar_estilo_calendario_global("dd/mm/yyyy");
+        }
+    });
+}
+
+function traer_grilla_informe_registro_lluvias() {
+    let fecha_inicio = $("#desde").val();
+    let fecha_fin = $("#hasta").val();
+    $.ajax({
+        type: "POST",
+        url: "consultas/registro_lluvia/consulta_gen_grilla_registro_lluvias_informe.jsp",
+        data: {
+            fecha_inicio: fecha_inicio,
+            fecha_fin: fecha_fin
+        },
+        dataType: "json",
+        beforeSend: function () {
+            cargar_load();
+        },
+        success: function (response) {
+            cerrar_load();
+            let tablaHTML = `
+                <table class="table table-striped table-bordered table-hover table-xs compact w-100" id="tabla_informe_registro_lluvias">
+                    <thead class="bg-primary">
+                        <tr>
+                            <th class="text-center" width="100">ID</th>
+                            <th class="text-center" width="100">ESTANCIAS / RETIROS</th>
+                            <th class="text-center" width="100">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            if (response.data && response.data.length > 0) {
+                $("#div_informe_registro_lluvia").html(''); // Limpiar el contenedor antes de agregar la tabla
+
+                response.data.forEach((row, index) => {
+                    tablaHTML += `
+                        <tr data-id-estancia="${row.id_estancia}">
+                            <td>${row.id_estancia}</td>
+                            <td>${row.estancia}</td>
+                            <td>${row.total_lluvia_mm || ''}</td>
+                        </tr>`;
+                });
+            }
+
+            tablaHTML += `</tbody></table>`;
+            $("#div_informe_registro_lluvia").html(tablaHTML);
+            $("#tabla_informe_registro_lluvias").DataTable({
+
+                paging: false,
+                ordering: false,
+                dom: "Bflrtip",
+                destroy: true,
+                language: {
+                    sSearch: "Buscar:",
+                    sLengthMenu: "Mostrar _MENU_ registros",
+                    sZeroRecords: "No se encontraron resultados",
+                    sEmptyTable: "Ning&uacute;n dato disponible en esta tabla",
+                    sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                    sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                    sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                    sInfoThousands: ",",
+                    sLoadingRecords: "Cargando...",
+                    oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"},
+                    buttons: {copyTitle: "DATOS COPIADOS", copySuccess: {_: "%d FILAS COPIADAS"}}
+                },
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'MOSTRAR / OCULTAR',
+                        exportOptions: {
+                            columns: ":visible"
+                        }
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: 'EXCEL',
+                        title: function () {
+                            let fecha_inicio = $('#desde').val();
+                            let fechaInicioFormateada;
+                            if (fecha_inicio.includes('-')) {
+                                let [y, m, d] = fecha_inicio.split('-');
+                                fechaInicioFormateada = `${d}/${m}/${y}`;
+                            } else if (fecha_inicio.includes('/')) {
+                                let [d, m, y] = fecha_inicio.split('/');
+                                fechaInicioFormateada = `${d}/${m}/${y}`;
+                            } else {
+                                fechaInicioFormateada = "Fecha no válida";
+                            }
+
+                            let fecha_fin = $('#hasta').val();
+                            let fechaFinFormateada;
+                            if (fecha_fin.includes('-')) {
+                                let [y, m, d] = fecha_fin.split('-');
+                                fechaFinFormateada = `${d}/${m}/${y}`;
+                            } else if (fecha_fin.includes('/')) {
+                                let [d, m, y] = fecha_fin.split('/');
+                                fechaFinFormateada = `${d}/${m}/${y}`;
+                            } else {
+                                fechaFinFormateada = "Fecha no válida";
+                            }
+
+                            let now = new Date();
+                            let formattedDate = now.toLocaleString("es-ES", {
+                                year: 'numeric', month: '2-digit', day: '2-digit',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                            }).replace(',', '');
+                            return `INFORME REGISTRO DE LLUVIAS: DESDE ${fechaInicioFormateada} HASTA ${fechaFinFormateada} - REP: ${formattedDate}`;
+                        },
+                        exportOptions: {
+                            columns: ":visible"
+                        }
+                    }
+                ],
+                initComplete: function () {
+                    $("#tabla_informe_registro_lluvias").removeClass("dataTable");
+                }
+            });
+        }
+        ,
+        error: function (error) {
+            toastr.error("Error al obtener los datos:", error);
+            cerrar_load();
+        }
+    }
+    );
 }
