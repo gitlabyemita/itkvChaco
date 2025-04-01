@@ -48,10 +48,13 @@
                                                 event.preventDefault();
                                                 generar_grilla_registros_lluvias();
                                             }">
-                                            <button id="btnBuscarFecha" class="btn btn-sm btn-primary ml-2" onclick="generar_grilla_registros_lluvias();" title="buscar">
+                                    <button id="btnBuscarFecha" class="btn btn-sm btn-primary ml-2" onclick="generar_grilla_registros_lluvias();" title="buscar">
                                         <i class="fas fa-search"></i>
                                     </button>
-                                    <button id="btnBuscarFecha" class="btn btn-sm btn-success ml-2" onclick="ir_informe_registro_lluvias();" title="ir a informe por rango de fecha ">
+                                    <button id="btnInformeDiario" class="btn btn-sm btn-success ml-2" onclick="ir_informe_registro_lluvias();" title="ir a informe por rango de fecha">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+                                    <button id="btnInformeAnual" class="btn btn-sm btn-warning ml-2" onclick="ir_informe_registro_lluvias_anual();" title="ir a informe anual">
                                         <i class="fas fa-file-alt"></i>
                                     </button>
 

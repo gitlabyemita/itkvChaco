@@ -9,7 +9,7 @@
 <%@ page import="org.json.JSONArray" %>
 <%@ page contentType="application/json; charset=utf-8" %>
 <%@ include file="../../cruds/conexion.jsp" %>
-
+    
 <%  // Creamos el objeto JSON que contendrá la respuesta
     String fecha = request.getParameter("fecha");
     JSONObject jsonResponse = new JSONObject();

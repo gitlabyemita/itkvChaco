@@ -589,3 +589,258 @@ function traer_grilla_informe_registro_lluvias() {
     }
     );
 }
+
+function ir_informe_registro_lluvias_anual() {
+    const anioActual = new Date().getFullYear();
+
+    $.ajax({
+        type: "post",
+        url: 'contenedores/registro_lluvia/contenedor_registro_lluvias_informe_anual.jsp',
+        success: function (res) {
+            $("#contenedor_principal").html("");
+            $("#contenedor_principal").html(res);
+            $("#anio").val(anioActual);
+            traer_grilla_informe_registro_lluvias_anual();
+        }
+    });
+}
+
+function traer_grilla_informe_registro_lluvias_anual() {
+    let anio = $("#anio").val();
+    $.ajax({
+        type: "POST",
+        url: "consultas/registro_lluvia/consulta_gen_grilla_registro_lluvias_anual.jsp",
+        data: {
+            anio: anio
+        },
+        dataType: "json",
+        beforeSend: function () {
+            cargar_load();
+        },
+        success: function (response) {
+            cerrar_load();
+            let tablaHTML = `
+        <table class="table info-anual table-striped table-bordered table-hover table-xs compact w-100" id="tabla_informe_registro_lluvias_anual">
+            <thead class="bg-primary">
+                <tr>
+                    <th class="text-center" rowspan="2">Campos</th>
+                    ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map(mes => `
+                        <th class="text-center" colspan="32">${mes}</th>
+                    `).join('')}
+                    <th class="text-center" rowspan="2">Total Anual</th> <!-- Nueva columna -->
+                </tr>
+                <tr>
+                    ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map(mes => `
+                        ${Array.from({length: 31}, (_, i) => `<th class="text-center">${i + 1}</th>`).join('')}
+                        <th class="text-center">Total</th>
+                    `).join('')}
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+            if (response.data && response.data.length > 0) {
+                $("#div_informe_anual_registro_lluvias").html(''); // Limpiar el contenedor antes de agregar la tabla
+
+                response.data.forEach((row, index) => {
+                    tablaHTML += `
+                <tr data-id-estancia="${row.id_estancia}">
+                    <td>${row.estancia}</td>
+            `;
+
+                    // Iterar sobre los meses
+                    ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].forEach(mes => {
+                        const mesData = row.meses[mes];
+                        const dias = mesData.dias;
+                        // Agregar los 31 días del mes
+                        for (let dia = 0; dia < 31; dia++) {
+                            tablaHTML += `<td>${dias[dia]}</td>`;
+                        }
+                        // Agregar el total del mes
+                        tablaHTML += `<td class="text-right">${mesData.total}</td>`;
+                    });
+
+                    // Agregar el total anual
+                    tablaHTML += `<td class="text-right">${row.total_anual}</td>`;
+
+                    tablaHTML += `</tr>`;
+                });
+            }
+
+            tablaHTML += `</tbody></table>`;
+            $("#div_informe_anual_registro_lluvias").html(tablaHTML);
+
+            // Inicializar DataTable
+            $("#tabla_informe_registro_lluvias_anual").DataTable({
+                paging: false,
+                ordering: false,
+                dom: "Bflrtip",
+                destroy: true,
+                language: {
+                    sSearch: "Buscar:",
+                    sLengthMenu: "Mostrar _MENU_ registros",
+                    sZeroRecords: "No se encontraron resultados",
+                    sEmptyTable: "Ningún dato disponible en esta tabla",
+                    sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                    sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                    sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                    sInfoThousands: ",",
+                    sLoadingRecords: "Cargando...",
+                    oPaginate: {sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior"},
+                    buttons: {copyTitle: "DATOS COPIADOS", copySuccess: {_: "%d FILAS COPIADAS"}}
+                },
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'MOSTRAR / OCULTAR'
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: 'EXCEL',
+                        title: 'Registro de Lluvias ' + $("#anio").val(), // Título del archivo Excel
+                        exportOptions: {
+                            columns: ':visible' // Exportar solo las columnas visibles
+                        },
+                        customize: function (xlsx) {
+                            function getExcelColumnName(colIndex) {
+                                let dividend = colIndex;
+                                let columnName = '';
+                                while (dividend > 0) {
+                                    let modulo = (dividend - 1) % 26;
+                                    columnName = String.fromCharCode(65 + modulo) + columnName;
+                                    dividend = Math.floor((dividend - modulo) / 26);
+                                }
+                                return columnName;
+                            }
+
+                            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                            var $sheet = $(sheet);
+
+                            var months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                            var totalCols = (months.length * 32) + 2;
+
+                            // Ahora desplazamos filas existentes a partir de la fila 2 hacia abajo
+                            $sheet.find('row').each(function () {
+                                var $row = $(this);
+                                var rowNum = parseInt($row.attr('r'));
+                                if (rowNum >= 2) {  // Importante: NO TOCAR LA FILA 1 (tu título original)
+                                    var newRowNum = rowNum + 2;
+                                    $row.attr('r', newRowNum);
+                                    $row.find('c').each(function () {
+                                        var $cell = $(this);
+                                        var cellRef = $cell.attr('r');
+                                        var newCellRef = cellRef.replace(/\d+/, newRowNum);
+                                        $cell.attr('r', newCellRef);
+                                    });
+                                }
+                            });
+
+                            // Ajustar referencias de mergeCells existentes
+                            $sheet.find('mergeCell').each(function () {
+                                var $mergeCell = $(this);
+                                var ref = $mergeCell.attr('ref');
+                                if (ref) {
+                                    var newRef = ref.replace(/\d+/g, function (match) {
+                                        var num = parseInt(match);
+                                        return (num >= 2) ? (num + 2) : num; // Solo ajusta filas desde la segunda hacia abajo
+                                    });
+                                    $mergeCell.attr('ref', newRef);
+                                }
+                            });
+
+                            // Ajustar etiqueta dimension
+                            var dimension = $sheet.find('dimension');
+                            if (dimension.length && dimension.attr('ref')) {
+                                var ref = dimension.attr('ref');
+                                var newRef = ref.replace(/\d+/g, function (match) {
+                                    var num = parseInt(match);
+                                    return (num >= 2) ? (num + 2) : num; // Solo ajusta desde la segunda fila hacia abajo
+                                });
+                                dimension.attr('ref', newRef);
+                            }
+
+                            // ----- Insertar fila nueva con los meses (fila 2 en Excel) -----
+                            var filaMeses = '<row r="2">';
+                            filaMeses += '<c r="A2"/>'; // celda vacía sobre Campos
+                            var colIndex = 2;
+
+                            months.forEach(function (mes) {
+                                var startCell = getExcelColumnName(colIndex) + "2";
+                                var endCell = getExcelColumnName(colIndex + 31) + "2";
+
+                                filaMeses += `<c t="inlineStr" r="${startCell}" s="2"><is><t>${mes}</t></is></c>`;
+                                for (var j = 1; j < 32; j++) {
+                                    filaMeses += `<c r="${getExcelColumnName(colIndex + j)}2"/>`;
+                                }
+
+                                var mergeCells = $sheet.find('mergeCells');
+                                if (mergeCells.length === 0) {
+                                    $sheet.find('worksheet').append('<mergeCells></mergeCells>');
+                                    mergeCells = $sheet.find('mergeCells');
+                                }
+                                mergeCells.append(`<mergeCell ref="${startCell}:${endCell}"/>`);
+
+                                colIndex += 32;
+                            });
+
+                            // Total Anual en fila 2
+                            var totalAnualCell = getExcelColumnName(colIndex) + "2";
+                            filaMeses += `<c t="inlineStr" r="${totalAnualCell}" s="2"><is><t></t></is></c>`;
+                            filaMeses += '</row>';
+                            $sheet.find('sheetData').find('row[r="1"]').after(filaMeses);
+
+                            // ----- Insertar fila con "Campos", días, total mensual (fila 3 en Excel) -----
+                            var filaDias = '<row r="3">';
+                            filaDias += `<c t="inlineStr" r="A3"><is><t>Campos</t></is></c>`;
+                            colIndex = 2;
+
+                            months.forEach(function () {
+                                for (var dia = 1; dia <= 31; dia++) {
+                                    filaDias += `<c t="inlineStr" r="${getExcelColumnName(colIndex)}3"><is><t>${dia}</t></is></c>`;
+                                    colIndex++;
+                                }
+                                filaDias += `<c t="inlineStr" r="${getExcelColumnName(colIndex)}3"><is><t>Total</t></is></c>`;
+                                colIndex++;
+                            });
+
+                            filaDias += `<c t="inlineStr" r="${getExcelColumnName(colIndex)}3"><is><t>Total Anual</t></is></c>`;
+                            filaDias += '</row>';
+                            $sheet.find('sheetData').find('row[r="2"]').after(filaDias);
+
+                            // ----- Estilo para centrar meses -----
+                            var styles = xlsx.xl['styles.xml'];
+                            var $styles = $(styles);
+                            var xfCount = $styles.find('cellXfs xf').length;
+                            $styles.find('cellXfs').append('<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>');
+                            $sheet.find('row[r="2"] c[s="2"]').attr('s', xfCount);
+
+                            // ----- Ajustar ancho columnas -----
+                            var cols = '<cols>';
+                            for (var c = 1; c <= totalCols; c++) {
+                                cols += `<col min="${c}" max="${c}" width="15" customWidth="1"/>`;
+                            }
+                            cols += '</cols>';
+                            $sheet.find('worksheet').prepend(cols);
+
+                            // Ocultar la fila 3
+                            $sheet.find('row[r="3"]').attr('hidden', '1');
+
+                        }
+
+
+                    }
+                ],
+                initComplete: function () {
+                    $("#tabla_informe_registro_lluvias_anual").removeClass("dataTable");
+
+                }
+            });
+        }
+        ,
+        error: function (error) {
+            toastr.error("Error al obtener los datos:", error);
+            cerrar_load();
+        }
+    }
+    );
+}

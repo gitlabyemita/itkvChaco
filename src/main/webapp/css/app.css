@@ -268,3 +268,57 @@ input[readonly],select[readonly],textarea[readonly] {
         min-width: 30px;
     }
 }
+
+/* Contenedor scrollable para la tabla */
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* Ajustes base de la tabla */
+table.info-anual {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* o 'fixed' si quieres anchos fijos */
+}
+
+.info-anual th,
+.info-anual td {
+  border: 1px solid #dee2e6;
+  padding: 0.75rem;
+  white-space: nowrap;    /* Evita que el texto salte de línea */
+  overflow: hidden;       /* Oculta texto que se desborda */
+  text-overflow: ellipsis;/* Muestra '...' si se recorta el texto */
+}
+
+/* Encabezado sticky (toda la fila) */
+.info-anual thead th {
+  position: sticky;
+  top: 0;
+  background-color: #007bff;
+  color: #fff;
+  z-index: 2; /* por encima de las celdas del body */
+}
+
+/* Primera columna sticky (encabezado + cuerpo) */
+.info-anual th:first-child,
+.info-anual td:first-child {
+  position: sticky;
+  left: 0;
+  background-color: #f8f9fa;
+  z-index: 3; /* más alto para que quede sobre otras columnas */
+  border-right: 1px solid #dee2e6;
+  /*min-width: 120px;  Ajusta según tu contenido */
+}
+
+/* (Opcional) Primera celda del thead con mismo color del resto del encabezado */
+.info-anual thead th:first-child {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* Efecto hover para la primera columna en el cuerpo de la tabla */
+table.info-anual tbody tr:hover td:first-child {
+    background-color: #01153E; /* Fondo navy en hover */
+    color: #fff;   
+}

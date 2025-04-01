@@ -398,12 +398,12 @@
             <script src="plugins/sum().js" type="text/javascript"></script>
             <script src="plugins/jquery.inputmask.bundle.js" type="text/javascript"></script>
             <script src="js/ppr/ppr_funciones.js" type="text/javascript"></script>
-            <script src="js/principal.js?v=3.7" type="text/javascript"></script>
-            <script src="js/itkv/itkv_funciones.js?v=3.7" type="text/javascript"></script>
+            <script src="js/principal.js?v=3.8" type="text/javascript"></script>
+            <script src="js/itkv/itkv_funciones.js?v=3.8" type="text/javascript"></script>
             <script src="plugins/autoNumeric.js" type="text/javascript"></script>
             <script src="plugins/compressor.min.js" type="text/javascript"></script>
-            <script src="js/control_bidones_itkv/control_bidones_itkv.js?v=3.7" type="text/javascript"></script>
-            <script src="js/registro_lluvia/registro_lluvia.js?v=3.7" type="text/javascript"></script>
+            <script src="js/control_bidones_itkv/control_bidones_itkv.js?v=3.8" type="text/javascript"></script>
+            <script src="js/registro_lluvia/registro_lluvia.js?v=3.8" type="text/javascript"></script>
             <!--para notificaciones toastr-->
             <script src="js/toastr.min.js" type="text/javascript"></script>
             <!--<script src="js/JSdataTablesV2_1_5.js" type="text/javascript"></script>-->
