@@ -35,7 +35,7 @@
     <div class="col-12">
         <div class="card elevation-2">
             <div class="card-header bg-primary">
-                <h3 class="card-title">REPORTE</h3>
+                <h3 class="card-title">Registro diario de lluvias - Informe por rango de fechas</h3>
             </div>
             <div class="card-body">
                 <div class="row">

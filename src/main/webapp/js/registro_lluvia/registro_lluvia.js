@@ -697,7 +697,15 @@ function traer_grilla_informe_registro_lluvias_anual() {
                     {
                         extend: 'excelHtml5',
                         text: 'EXCEL',
-                        title: 'Registro de Lluvias ' + $("#anio").val(), // Título del archivo Excel
+                        title: function () {
+                            let now = new Date();
+                            let anio = $("#anio").val();
+                            let formattedDate = now.toLocaleString("es-ES", {
+                                year: 'numeric', month: '2-digit', day: '2-digit',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                            }).replace(',', '');
+                            return `INFORME REGISTRO DE LLUVIAS ANUAL ${anio} - REP: ${formattedDate}`;
+                        },
                         exportOptions: {
                             columns: ':visible' // Exportar solo las columnas visibles
                         },
