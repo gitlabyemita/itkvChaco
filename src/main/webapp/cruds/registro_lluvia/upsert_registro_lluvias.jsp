@@ -34,24 +34,11 @@
             callableStatement.setInt(2, Integer.parseInt(idEstanciaStr));
             callableStatement.setString(3, estancia);
 
-            // Manejar lluvia_mm (puede ser null)
             if (lluviaMmStr == null || lluviaMmStr.trim().isEmpty() || lluviaMmStr.equals("null")) {
-                callableStatement.setNull(4, java.sql.Types.NUMERIC);
+                callableStatement.setNull(4, java.sql.Types.INTEGER);
             } else {
-                try {
-                    float lluviaMm = Float.parseFloat(lluviaMmStr);
-                    callableStatement.setFloat(4, lluviaMm);
-                } catch (NumberFormatException e) {
-                    throw new Exception("El valor de lluvia_mm no es un número válido: " + lluviaMmStr);
-                }
+                callableStatement.setInt(4, Integer.parseInt(lluviaMmStr));
             }
-            /*  
-            if (lluviaMmStr == null || lluviaMmStr.isEmpty()) {
-                callableStatement.setNull(4, java.sql.Types.NUMERIC);
-            } else {
-                callableStatement.setString(4, lluviaMmStr);
-            }
-             */
             // Manejar observacion (puede ser null)
             if (observacion == null || observacion.isEmpty()) {
                 callableStatement.setNull(5, java.sql.Types.VARCHAR);

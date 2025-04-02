@@ -21,6 +21,7 @@
     String db = "GrupoMaehara";
 //    String db = "GrupoMaehara2";
   //    String ip = "localhost";
+//      String ip = "26.175.209.157";
     String ip = "192.168.55.140";
     Connection connection=null;
  
