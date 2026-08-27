@@ -38,6 +38,7 @@
 </div> 
 <br>
 
+<input type="hidden" id="pantalla" value="control_bid">
 
 <button id="btnAgregarBidon" class="btn btn-success btn-lg " onclick="ejecutarJob('Sincronizador Chaco a Asu');">
     <i class="fa-solid fa-plus"></i> EXPORTAR

@@ -1718,6 +1718,7 @@ function crearNuevoResponsableItkv(nombre) {
 
 // Función que realiza la petición AJAX para insertar nuevo responsable
 function crudNuevoResponsableItkv(nombre) {
+    let pantalla = $("#pantalla").val();
     $.ajax({
         type: "post",
         url: "cruds/control_bidones_itkv/crud_nuevo_responsable_itkv.jsp",
@@ -1729,14 +1730,16 @@ function crudNuevoResponsableItkv(nombre) {
         },
         success: function (res) {
             cerrar_load();
-            if (res.tipo == 1) {
+            if (res.tipo == 1 && pantalla === "control_bid") {
                 toastr.success(res.mensaje, "Mensaje de &eacute;xito: ");
                 traerSelectResponsable();
                 $("#responsable_por").val('');
                 $("#responsable_por").hide();
                 $("#responsable_por_entrega").val('');
                 $("#responsable_por_entrega").hide();
-            } else {
+            }else if (res.tipo == 1 && pantalla === "insumos_vet"){
+                ir_salida_insumos_veterinarios_itkv();
+            }else {
                 toastr.error('Error al actualizar la cantidad restante: ' + res.mensaje, "Error: ");
             }
         },

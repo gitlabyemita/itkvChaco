@@ -13,7 +13,8 @@
 <%    PreparedStatement ps, ps2, ps3, ps4, ps5, ps6,ps7;
     ResultSet rs, rs2, rs3, rs4, rs5, rs6,rsInsumos;
     try {
-        ps = connection.prepareStatement(" SELECT DISTINCT T0.[U_retiradopor] as U_retiradopor              FROM    IGE1 T0");// 3
+//        ps = connection.prepareStatement(" SELECT DISTINCT T0.[U_retiradopor] as U_retiradopor              FROM    IGE1 T0");// 3
+        ps = connection.prepareStatement(" select nombre as U_retiradopor from itkv_personales");// 3
         rs = ps.executeQuery();
  
         ps3 = connection.prepareStatement(" SELECT T0.[PrcCode], T0.[PrcName], T0.[U_CodAnt], T0.[U_Comen]  FROM    OPRC T0 WHERE T0.[DimCode] = 3 ");// UBICACION
@@ -53,6 +54,8 @@
     </div>
 </div> 
 
+<input type="hidden" id="pantalla" value="insumos_vet">
+
 <form id="form_add_consumo" method="post" >
 
 
@@ -66,7 +69,7 @@
         <% }%>
         <option>OTROS</option>    
     </select>
-     <input type="text" class="form-control " placeholder="INGRESE NOMBRE" value=""   id="retirado_por" style="display: none">
+     <input type="text" class="form-control " placeholder="INGRESE NOMBRE" value=""   id="retirado_por" style="display: none" onblur ="crudNuevoResponsableItkv(this.value)">
         
     <strong><a>Ubicacion</a></strong>
     <select class="form-control selectpicker " data-live-search="true" id="ubicacion">
